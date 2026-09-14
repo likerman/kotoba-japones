@@ -1,0 +1,49 @@
+# Tests
+
+## Test 1 - Completar una sesión mixta [sanity]
+Viewport: desktop (1280x800)
+Covers: inicio de sesión, selección de respuestas, corrección, avance y resultados
+Description: Verifica el flujo principal de una práctica completa.
+
+Steps:
+1. Pulsar "Empezar práctica"
+2. Elegir una respuesta, comprobarla y continuar en cada desafío
+3. Completar las diez preguntas
+
+Expected: Se muestra la pantalla "SESIÓN COMPLETADA" con un puntaje sobre diez.
+
+## Test 2 - Practicar un módulo específico
+Viewport: desktop (1280x800)
+Covers: selección temática, módulo de escritura y feedback explicativo
+Description: Verifica que un estudiante pueda practicar solamente hiragana y katakana.
+
+Steps:
+1. Elegir "Hiragana y katakana"
+2. Seleccionar una opción y pulsar "Comprobar"
+3. Observar la corrección de la respuesta
+
+Expected: Se indica visualmente la opción correcta y aparece una explicación de la lectura.
+
+## Test 3 - Conservar el progreso
+Viewport: desktop (1280x800)
+Covers: persistencia local, total de aciertos y precisión
+Description: Verifica que el avance permanezca disponible después de recargar.
+
+Steps:
+1. Responder al menos un desafío
+2. Volver al inicio
+3. Recargar la página
+
+Expected: Las estadísticas conservan las respuestas y la precisión previamente registradas.
+
+## Test 4 - Reiniciar el progreso con confirmación
+Viewport: mobile (375x667)
+Covers: diseño móvil, acción destructiva y confirmación
+Description: Verifica que el progreso sólo se borre después de una confirmación explícita.
+
+Steps:
+1. Pulsar "Reiniciar progreso"
+2. Cancelar la confirmación y comprobar que las estadísticas se conservan
+3. Repetir la acción y aceptar la confirmación
+
+Expected: Tras aceptar, aciertos y racha vuelven a cero; al cancelar no se modifican.

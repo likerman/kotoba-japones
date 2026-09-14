@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f1e8" />
+    <meta name="description" content="Práctica progresiva de japonés basada en el manual personal." />
+    <title>Kotoba — práctica de japonés</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Shippori+Mincho:wght@600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="paper-noise"></div>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Inicio Kotoba">
+        <span class="brand-mark">言</span>
+        <span><strong>Kotoba</strong><small>tu práctica de japonés</small></span>
+      </a>
+      <div class="header-progress" aria-label="Progreso de hoy">
+        <span>Meta diaria</span>
+        <div class="mini-track"><i id="dailyBar"></i></div>
+        <strong id="dailyCount">0/10</strong>
+      </div>
+    </header>
+
+    <main>
+      <section id="homeView" class="view active">
+        <div class="hero">
+          <div>
+            <p class="eyebrow">こんにちは、ヘレミアスさん</p>
+            <h1>Un poco de japonés,<br><em>todos los días.</em></h1>
+            <p class="hero-copy">Practicá lo que ya viste en el manual, a tu ritmo y sin miedo a equivocarte.</p>
+            <button id="continueBtn" class="primary-btn">Empezar práctica <span>→</span></button>
+          </div>
+          <div class="sun-card" aria-hidden="true">
+            <div class="sun"></div><span class="torii">鳥居</span>
+            <p>今日の一歩</p><small>El paso de hoy</small>
+          </div>
+        </div>
+
+        <section class="stats-grid" aria-label="Resumen de progreso">
+          <article><span class="stat-icon coral">火</span><div><strong id="streakStat">0</strong><small>días de racha</small></div></article>
+          <article><span class="stat-icon blue">✓</span><div><strong id="correctStat">0</strong><small>respuestas correctas</small></div></article>
+          <article><span class="stat-icon green">葉</span><div><strong id="accuracyStat">—</strong><small>precisión general</small></div></article>
+        </section>
+
+        <section class="section-block">
+          <div class="section-heading"><div><p class="eyebrow">ELEGÍ TU CAMINO</p><h2>¿Qué querés practicar?</h2></div><button id="resetBtn" class="text-btn">Reiniciar progreso</button></div>
+          <div id="moduleGrid" class="module-grid"></div>
+        </section>
+
+        <section class="manual-note">
+          <span class="note-glyph">文</span>
+          <div><p class="eyebrow">CONECTADO CON TU MANUAL</p><h3>El contenido crece con vos</h3><p>Los desafíos están organizados por tema y clase. Cuando el manual incorpore material nuevo, se suma como un nuevo módulo o nivel.</p></div>
+          <span class="seal">学<br>習</span>
+        </section>
+      </section>
+
+      <section id="practiceView" class="view practice-view">
+        <nav class="practice-nav">
+          <button id="exitBtn" class="icon-btn" aria-label="Salir de la práctica">×</button>
+          <div class="progress-wrap"><span id="questionNumber">1 de 10</span><div class="progress-track"><i id="sessionBar"></i></div></div>
+          <div class="lives" id="lives" aria-label="Intentos restantes">● ● ●</div>
+        </nav>
+        <div class="question-shell">
+          <div class="question-meta"><span id="moduleBadge">Escritura</span><span id="questionKind">Reconocimiento</span></div>
+          <p id="prompt" class="question-prompt">¿Cómo se lee este carácter?</p>
+          <div id="questionDisplay" class="question-display japanese">ア</div>
+          <p id="hint" class="hint"></p>
+          <div id="answerArea" class="answer-grid"></div>
+          <div id="feedback" class="feedback" aria-live="polite"></div>
+          <button id="checkBtn" class="primary-btn check-btn" disabled>Comprobar</button>
+          <button id="nextBtn" class="primary-btn check-btn hidden">Continuar →</button>
+        </div>
+      </section>
+
+      <section id="resultsView" class="view results-view">
+        <div class="results-card">
+          <span class="result-stamp">よく<br>できた</span>
+          <p class="eyebrow">SESIÓN COMPLETADA</p>
+          <h2 id="resultTitle">¡Muy buen trabajo!</h2>
+          <p id="resultCopy"></p>
+          <div class="result-score"><strong id="resultScore">8/10</strong><span>respuestas correctas</span></div>
+          <div id="reviewList" class="review-list"></div>
+          <button id="homeBtn" class="primary-btn">Volver al inicio</button>
+          <button id="retryBtn" class="secondary-btn">Practicar de nuevo</button>
+        </div>
+      </section>
+    </main>
+    <footer><span>ことば</span><p>Basado en el Manual de japonés · El progreso se guarda en este dispositivo</p></footer>
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
