@@ -4,6 +4,14 @@ const state = { module: 'mix', questions: [], index: 0, selected: null, correct:
 const saved = JSON.parse(localStorage.getItem('kotoba-progress') || '{}');
 const progress = { total: saved.total || 0, correct: saved.correct || 0, streak: saved.streak || 0, lastDay: saved.lastDay || '', today: saved.today || 0, todayDate: saved.todayDate || '' };
 
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem('kotoba-theme', theme);
+  $('#themeBtn').setAttribute('aria-pressed', String(theme === 'dark'));
+  $('#themeBtn').setAttribute('aria-label', theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro');
+  document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#171c1a' : '#f5f1e8';
+}
+
 const modules = [
   {id:'kana', icon:'あ', title:'Hiragana y katakana', desc:'Reconocé los silabarios y su lectura en romaji.', level:'Nivel inicial', color:'coral'},
   {id:'vocabulary', icon:'物', title:'Vocabulario', desc:'Objetos, lugares, alimentos, países y verbos.', level:'5 categorías', color:'blue'},
@@ -78,5 +86,7 @@ function save(){localStorage.setItem('kotoba-progress',JSON.stringify(progress))
 $('#continueBtn').onclick=()=>start('mix'); $('#checkBtn').onclick=check; $('#nextBtn').onclick=next; $('#exitBtn').onclick=()=>{renderHome();showView('#homeView');};
 $('#homeBtn').onclick=()=>{renderHome();showView('#homeView');}; $('#retryBtn').onclick=()=>start(state.module);
 $('#resetBtn').onclick=()=>{if(confirm('¿Querés borrar todo el progreso guardado?')){Object.assign(progress,{total:0,correct:0,streak:0,lastDay:'',today:0,todayDate:''});save();renderHome();}};
+$('#themeBtn').onclick=()=>applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 document.addEventListener('keydown',e=>{if(!$('#practiceView').classList.contains('active'))return;const answers=[...document.querySelectorAll('.answer:not(:disabled)')];if(['1','2','3','4'].includes(e.key)&&answers[+e.key-1])answers[+e.key-1].click();if(e.key==='Enter'){if(!$('#nextBtn').classList.contains('hidden'))next();else if(!$('#checkBtn').disabled)check();}});
+applyTheme(document.documentElement.dataset.theme || 'light');
 renderHome();

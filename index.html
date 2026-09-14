@@ -6,6 +6,13 @@
     <meta name="theme-color" content="#f5f1e8" />
     <meta name="description" content="Práctica progresiva de japonés basada en el manual personal." />
     <title>Kotoba — práctica de japonés</title>
+    <script>
+      (() => {
+        const savedTheme = localStorage.getItem('kotoba-theme');
+        const theme = savedTheme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Shippori+Mincho:wght@600;700&display=swap" rel="stylesheet" />
@@ -18,10 +25,16 @@
         <span class="brand-mark">言</span>
         <span><strong>Kotoba</strong><small>tu práctica de japonés</small></span>
       </a>
-      <div class="header-progress" aria-label="Progreso de hoy">
-        <span>Meta diaria</span>
-        <div class="mini-track"><i id="dailyBar"></i></div>
-        <strong id="dailyCount">0/10</strong>
+      <div class="header-actions">
+        <button id="themeBtn" class="theme-btn" type="button" aria-label="Activar modo oscuro" aria-pressed="false">
+          <span class="sun-icon" aria-hidden="true">☀</span>
+          <span class="moon-icon" aria-hidden="true">☾</span>
+        </button>
+        <div class="header-progress" aria-label="Progreso de hoy">
+          <span>Meta diaria</span>
+          <div class="mini-track"><i id="dailyBar"></i></div>
+          <strong id="dailyCount">0/10</strong>
+        </div>
       </div>
     </header>
 

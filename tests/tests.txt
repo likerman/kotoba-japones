@@ -47,3 +47,15 @@ Steps:
 3. Repetir la acción y aceptar la confirmación
 
 Expected: Tras aceptar, aciertos y racha vuelven a cero; al cancelar no se modifican.
+
+## Test 5 - Cambiar y conservar el tema visual
+Viewport: mobile (375x667)
+Covers: modo oscuro, accesibilidad del selector y persistencia de preferencia
+Description: Verifica que el tema pueda cambiarse y se recuerde después de recargar.
+
+Steps:
+1. Pulsar el selector de tema en la cabecera
+2. Comprobar que la interfaz cambia al esquema oscuro
+3. Recargar la página
+
+Expected: La interfaz continúa en modo oscuro y el selector ofrece volver al modo claro.
