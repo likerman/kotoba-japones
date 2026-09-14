@@ -14,9 +14,10 @@ function applyTheme(theme) {
 
 const modules = [
   {id:'kana', icon:'あ', title:'Hiragana y katakana', desc:'Reconocé los silabarios y su lectura en romaji.', level:'Nivel inicial', color:'coral'},
-  {id:'vocabulary', icon:'物', title:'Vocabulario', desc:'Objetos, lugares, alimentos, países y verbos.', level:'5 categorías', color:'blue'},
+  {id:'vocabulary', icon:'物', title:'Vocabulario', desc:'Objetos, lugares, tiempo, transporte y verbos.', level:'Contenido ampliado', color:'blue'},
   {id:'grammar', icon:'文', title:'Gramática', desc:'Completá partículas, demostrativos y preguntas.', level:'8 estructuras', color:'green'},
-  {id:'numbers', icon:'時', title:'Números y tiempo', desc:'Practicá precios, horas y pisos.', level:'8 desafíos', color:'gold'},
+  {id:'numbers', icon:'時', title:'Números y tiempo', desc:'Practicá precios, horas y pisos.', level:'10 desafíos', color:'gold'},
+  {id:'movement', icon:'行', title:'Rutinas y movimiento', desc:'Formas verbales, horarios, destinos, medios y compañía.', level:'Lecciones 4 y 5', color:'coral'},
   {id:'mix', icon:'祭', title:'Repaso mixto', desc:'Una sesión variada con todo lo aprendido.', level:'Recomendado', color:'ink'}
 ];
 
@@ -39,9 +40,10 @@ function vocabQuestion(){
 }
 function grammarQuestion(){ const x=sample(C.grammar)[0]; return {type:'Gramática',kind:'Completar',prompt:'Elegí la opción correcta.',display:x.q,answer:x.a,choices:shuffle(x.choices),note:x.note}; }
 function numbersQuestion(){ const x=sample(C.numbers)[0]; return {type:'Números y tiempo',kind:'Lectura',prompt:'¿Qué significa esta expresión?',display:x.q,answer:x.a,choices:shuffle(x.choices),note:`${x.q} significa ${x.a}.`}; }
+function movementQuestion(){ const x=sample(C.movement)[0]; return {type:'Rutinas y movimiento',kind:'Lecciones 4 y 5',prompt:'Elegí la opción correcta.',display:x.q,answer:x.a,choices:shuffle(x.choices),note:x.note}; }
 function makeQuestions(module){
-  const factories={kana:kanaQuestion,vocabulary:vocabQuestion,grammar:grammarQuestion,numbers:numbersQuestion};
-  if(module==='mix') return shuffle([kanaQuestion,kanaQuestion,vocabQuestion,vocabQuestion,vocabQuestion,grammarQuestion,grammarQuestion,numbersQuestion,numbersQuestion,grammarQuestion]).map(f=>f());
+  const factories={kana:kanaQuestion,vocabulary:vocabQuestion,grammar:grammarQuestion,numbers:numbersQuestion,movement:movementQuestion};
+  if(module==='mix') return shuffle([kanaQuestion,vocabQuestion,vocabQuestion,vocabQuestion,grammarQuestion,grammarQuestion,numbersQuestion,movementQuestion,movementQuestion,movementQuestion]).map(f=>f());
   return Array.from({length:10},()=>factories[module]());
 }
 

@@ -12,17 +12,17 @@ Steps:
 
 Expected: Se muestra la pantalla "SESIÓN COMPLETADA" con un puntaje sobre diez.
 
-## Test 2 - Practicar un módulo específico
+## Test 2 - Practicar rutinas y movimiento
 Viewport: desktop (1280x800)
-Covers: selección temática, módulo de escritura y feedback explicativo
-Description: Verifica que un estudiante pueda practicar solamente hiragana y katakana.
+Covers: selección temática, formas verbales, partículas de movimiento y feedback explicativo
+Description: Verifica que el contenido nuevo de las lecciones 4 y 5 esté disponible como práctica independiente.
 
 Steps:
-1. Elegir "Hiragana y katakana"
+1. Elegir "Rutinas y movimiento"
 2. Seleccionar una opción y pulsar "Comprobar"
 3. Observar la corrección de la respuesta
 
-Expected: Se indica visualmente la opción correcta y aparece una explicación de la lectura.
+Expected: Se indica visualmente la opción correcta y aparece una explicación basada en el manual.
 
 ## Test 3 - Conservar el progreso
 Viewport: desktop (1280x800)
