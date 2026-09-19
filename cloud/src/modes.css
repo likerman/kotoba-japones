@@ -1,0 +1,80 @@
+.competition-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 auto 30px;
+  padding: 22px 24px;
+  max-width: 760px;
+  background: var(--ink);
+  color: var(--paper);
+  text-align: left;
+  border-radius: 6px;
+}
+
+.competition-cta strong,
+.competition-cta small {
+  display: block;
+}
+
+.competition-cta small {
+  margin-top: 4px;
+  opacity: .75;
+}
+
+.competition-cta .primary-btn {
+  background: var(--coral);
+  color: white;
+  white-space: nowrap;
+}
+
+.competition-modules {
+  margin-top: 55px;
+  text-align: left;
+}
+
+.mode-banner {
+  display: flex;
+  justify-content: space-between;
+  max-width: 680px;
+  margin: 24px auto -30px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  background: var(--white);
+  font-size: 12px;
+}
+
+.mode-banner span {
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+
+.mode-banner.competition {
+  border-color: var(--coral);
+}
+
+.mode-banner.competition strong,
+.point-change.positive {
+  color: var(--green);
+}
+
+.point-change {
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.point-change.negative {
+  color: var(--coral);
+}
+
+@media (max-width: 760px) {
+  .competition-cta {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mode-banner {
+    margin-inline: 0;
+  }
+}

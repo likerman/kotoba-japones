@@ -3,10 +3,10 @@
     "name": "Elegir perfil y completar entrenamiento",
     "sanity": true,
     "viewport": "desktop",
-    "covers": ["selección de perfil", "sesión de entrenamiento", "POST /api/sessions", "puntos persistentes"],
-    "description": "Verifica el recorrido principal desde la elección del estudiante hasta el guardado de puntos.",
-    "steps": ["Elegir Jereさん", "Iniciar un repaso mixto y responder las diez preguntas", "Volver al inicio al completar la sesión"],
-    "expected": "El puntaje de Jereさん aumenta según sus aciertos y la sesión aparece en sus estadísticas."
+    "covers": ["selección de perfil", "sesión de entrenamiento", "POST /api/sessions", "práctica sin puntos"],
+    "description": "Verifica que entrenar registre aprendizaje sin modificar la carrera.",
+    "steps": ["Elegir Jereさん y anotar su puntaje", "Iniciar un repaso mixto y responder las diez preguntas", "Volver al inicio al completar la sesión"],
+    "expected": "La sesión alimenta las estadísticas de Jereさん, pero su puntaje competitivo no cambia."
   },
   {
     "name": "Alternar perfiles sin mezclar estadísticas",
@@ -19,10 +19,10 @@
   {
     "name": "Comparar la carrera compartida",
     "viewport": "desktop",
-    "covers": ["modo Competir", "clasificación", "distancia de puntos", "diagnóstico por tema"],
-    "description": "Verifica que la competición muestre el estado compartido de ambos estudiantes.",
-    "steps": ["Elegir cualquier perfil", "Abrir Competir", "Revisar la pista, clasificación y oportunidades"],
-    "expected": "Se muestran Aiméさん y Jereさん con puntos, sesiones, precisión y temas a reforzar."
+    "covers": ["modo Competir", "ejercicios competitivos", "suma y resta de puntos", "clasificación"],
+    "description": "Verifica que la competición tenga ejercicios propios y puntaje bidireccional.",
+    "steps": ["Elegir cualquier perfil", "Abrir Competir", "Iniciar un desafío", "Responder al menos una pregunta bien y una mal", "Completar el desafío y volver a la carrera"],
+    "expected": "La pantalla muestra +10 por acierto y −5 por error; al finalizar, el resultado neto modifica sólo el puntaje del perfil activo."
   },
   {
     "name": "Practicar contenido nuevo de Lecciones 1–5",

@@ -9,6 +9,8 @@ type Profile = {
   correct: number;
   total: number;
   sessions: number;
+  trainingSessions: number;
+  competitionSessions: number;
   perfectSessions: number;
   topicStats: TopicStats;
   lastPlayed: number | null;
@@ -19,8 +21,8 @@ const allowedProfiles = new Set(['aime', 'jere']);
 const allowedModules = new Set(['foundations', 'writing', 'objects', 'routines', 'movement', 'mix']);
 
 const initialProfiles: Profile[] = [
-  { slug: 'aime', name: 'Aiméさん', emoji: '桜', points: 0, correct: 0, total: 0, sessions: 0, perfectSessions: 0, topicStats: {}, lastPlayed: null },
-  { slug: 'jere', name: 'Jereさん', emoji: '富', points: 0, correct: 0, total: 0, sessions: 0, perfectSessions: 0, topicStats: {}, lastPlayed: null },
+  { slug: 'aime', name: 'Aiméさん', emoji: '桜', points: 0, correct: 0, total: 0, sessions: 0, trainingSessions: 0, competitionSessions: 0, perfectSessions: 0, topicStats: {}, lastPlayed: null },
+  { slug: 'jere', name: 'Jereさん', emoji: '富', points: 0, correct: 0, total: 0, sessions: 0, trainingSessions: 0, competitionSessions: 0, perfectSessions: 0, topicStats: {}, lastPlayed: null },
 ];
 
 async function listProfiles() {
@@ -29,7 +31,9 @@ async function listProfiles() {
     await db.add(TABLE, initialProfiles.map((profile) => ({ ...profile })));
     ({ items } = await db.list<Profile>(TABLE, { limit: 10 }));
   }
-  return items.sort((a, b) => a.slug.localeCompare(b.slug));
+  return items
+    .map((profile) => ({ ...profile, trainingSessions: profile.trainingSessions || 0, competitionSessions: profile.competitionSessions || 0 }))
+    .sort((a, b) => a.slug.localeCompare(b.slug));
 }
 
 export const profileRoutes: RouterRoutes = {
@@ -42,6 +46,7 @@ export const profileRoutes: RouterRoutes = {
       correct?: number;
       total?: number;
       topics?: TopicStats;
+      mode?: 'training' | 'competition';
     };
 
     if (!payload || !allowedProfiles.has(payload.profile || '') || !allowedModules.has(payload.module || '')) {
@@ -50,9 +55,11 @@ export const profileRoutes: RouterRoutes = {
 
     const correct = Number(payload.correct);
     const total = Number(payload.total);
+    const mode = payload.mode || 'training';
     if (!Number.isInteger(correct) || !Number.isInteger(total) || total < 1 || total > 10 || correct < 0 || correct > total) {
       return error('Resultado inválido', 400);
     }
+    if (mode !== 'training' && mode !== 'competition') return error('Modo inválido', 400);
 
     const profiles = await listProfiles();
     const current = profiles.find((profile) => profile.slug === payload.profile);
@@ -68,14 +75,17 @@ export const profileRoutes: RouterRoutes = {
     }
 
     const perfect = correct === total;
+    const scoreDelta = mode === 'competition' ? correct * 10 - (total - correct) * 5 : 0;
     const updated: Profile = {
       slug: current.slug,
       name: current.name,
       emoji: current.emoji,
-      points: current.points + correct * 10 + (perfect ? 25 : 0),
+      points: current.points + scoreDelta,
       correct: current.correct + correct,
       total: current.total + total,
       sessions: current.sessions + 1,
+      trainingSessions: (current.trainingSessions || 0) + (mode === 'training' ? 1 : 0),
+      competitionSessions: (current.competitionSessions || 0) + (mode === 'competition' ? 1 : 0),
       perfectSessions: current.perfectSessions + (perfect ? 1 : 0),
       topicStats,
       lastPlayed: Date.now(),
@@ -83,6 +93,6 @@ export const profileRoutes: RouterRoutes = {
 
     const [saved] = await db.update(TABLE, [{ id: current.id, record: { ...updated } }]);
     if (!saved) return error('No se pudo guardar la sesión', 500);
-    return json({ profile: { ...updated, id: current.id }, profiles: await listProfiles() });
+    return json({ profile: { ...updated, id: current.id }, profiles: await listProfiles(), scoreDelta, mode });
   }],
 };

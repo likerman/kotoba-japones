@@ -1,6 +1,7 @@
 import { api } from '@appdeploy/client';
 import './styles.css';
 import './kana.css';
+import './modes.css';
 import { kanaReadingFor, modules, type Module, type Question } from './data';
 
 type TopicStats = Record<string, { correct: number; total: number }>;
@@ -13,6 +14,8 @@ type Profile = {
   correct: number;
   total: number;
   sessions: number;
+  trainingSessions?: number;
+  competitionSessions?: number;
   perfectSessions: number;
   topicStats: TopicStats;
   lastPlayed: number | null;
@@ -27,6 +30,8 @@ let questionIndex = 0;
 let selectedAnswer = '';
 let sessionCorrect = 0;
 let sessionTopics: TopicStats = {};
+let sessionMode: 'training' | 'competition' = 'training';
+let sessionScore = 0;
 let review: Array<{ display: string; answer: string; displayReading: string; answerReading: string }> = [];
 
 const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
@@ -45,8 +50,8 @@ async function loadProfiles() {
     profiles = response.data.profiles;
   } catch {
     profiles = [
-      { slug: 'aime', name: 'Aiméさん', emoji: '桜', points: 0, correct: 0, total: 0, sessions: 0, perfectSessions: 0, topicStats: {}, lastPlayed: null },
-      { slug: 'jere', name: 'Jereさん', emoji: '富', points: 0, correct: 0, total: 0, sessions: 0, perfectSessions: 0, topicStats: {}, lastPlayed: null },
+      { slug: 'aime', name: 'Aiméさん', emoji: '桜', points: 0, correct: 0, total: 0, sessions: 0, trainingSessions: 0, competitionSessions: 0, perfectSessions: 0, topicStats: {}, lastPlayed: null },
+      { slug: 'jere', name: 'Jereさん', emoji: '富', points: 0, correct: 0, total: 0, sessions: 0, trainingSessions: 0, competitionSessions: 0, perfectSessions: 0, topicStats: {}, lastPlayed: null },
     ];
   }
 }
@@ -119,8 +124,8 @@ function renderTraining() {
   shell(`
     <section class="home-view">
       <div class="hero">
-        <div><p class="eyebrow">こんにちは、${profile.name}</p><h1>Tu camino,<br><em>un paso a la vez.</em></h1><p class="lead">Entrená con las Lecciones 1–5 y convertí cada sesión en progreso visible.</p><button class="primary-btn" data-start="mix">Empezar repaso mixto <span>→</span></button></div>
-        <div class="personal-card"><span>${profile.emoji}</span><p>Puntaje personal</p><strong>${profile.points}</strong><small>${profile.sessions} sesiones · ${accuracy(profile)}% precisión</small></div>
+        <div><p class="eyebrow">こんにちは、${profile.name}</p><h1>Tu camino,<br><em>un paso a la vez.</em></h1><p class="lead">Practicá con las Lecciones 1–5 sin sumar ni restar puntos. Tus resultados ayudan a detectar qué temas reforzar.</p><button class="primary-btn" data-start="mix">Empezar repaso mixto <span>→</span></button></div>
+        <div class="personal-card"><span>${profile.emoji}</span><p>Puntaje competitivo</p><strong>${profile.points}</strong><small>${profile.sessions} sesiones · ${accuracy(profile)}% precisión</small></div>
       </div>
       <section class="stats-grid">
         <article><strong>${profile.correct}</strong><small>respuestas correctas</small></article>
@@ -128,40 +133,45 @@ function renderTraining() {
         <article><strong>${accuracy(profile)}%</strong><small>precisión general</small></article>
       </section>
       ${weak.length ? `<section class="weak-panel"><div><p class="eyebrow">PARA REFORZAR</p><h2>Tus próximos focos</h2></div><div class="weak-list">${weak.map((item) => `<span>${item.topic}<b>${item.accuracy}%</b></span>`).join('')}</div></section>` : ''}
-      <section class="section-block"><p class="eyebrow">ENTRENAMIENTO</p><h2>¿Qué querés practicar?</h2><div class="module-grid">
+      <section class="section-block"><p class="eyebrow">ENTRENAMIENTO · SIN PUNTOS</p><h2>¿Qué querés practicar?</h2><div class="module-grid">
         ${modules.map((module) => `<button class="module-card" data-start="${module.id}"><span class="module-icon">${module.icon}</span><span><small>${module.level}</small><strong>${module.title}</strong><p>${module.description}</p></span><b>→</b></button>`).join('')}
       </div></section>
     </section>
   `);
-  document.querySelectorAll<HTMLElement>('[data-start]').forEach((button) => button.onclick = () => startSession(button.dataset.start!));
+  document.querySelectorAll<HTMLElement>('[data-start]').forEach((button) => button.onclick = () => startSession(button.dataset.start!, 'training'));
 }
 
 function renderRace() {
   if (!activeProfile) return renderProfilePicker();
   const ordered = [...profiles].sort((a, b) => b.points - a.points);
-  const leaderPoints = Math.max(ordered[0]?.points || 0, 100);
+  const minPoints = Math.min(0, ...profiles.map((profile) => profile.points));
+  const maxPoints = Math.max(20, ...profiles.map((profile) => profile.points));
+  const pointRange = Math.max(20, maxPoints - minPoints);
   const difference = Math.abs((ordered[0]?.points || 0) - (ordered[1]?.points || 0));
   shell(`
     <section class="race-view">
-      <p class="eyebrow">競争 · COMPETICIÓN AMISTOSA</p><h1>La carrera Kotoba</h1><p class="lead">Cada acierto suma 10 puntos. Una sesión perfecta agrega 25 puntos extra.</p>
+      <p class="eyebrow">競争（きょうそう）· COMPETICIÓN AMISTOSA</p><h1>La carrera Kotoba</h1><p class="lead">Acá sí se juega por puntos: cada acierto suma 10 y cada error resta 5. El resultado se aplica a tu perfil al terminar el desafío.</p>
+      <div class="competition-cta"><div><strong>Desafío competitivo</strong><small>10 preguntas · +10 por acierto · −5 por error</small></div><button class="primary-btn" data-compete="mix">Competir ahora →</button></div>
       <div class="race-track">
-        ${profiles.map((profile) => `<div class="race-lane"><div class="runner" style="width:${Math.max(8, profile.points / leaderPoints * 100)}%"><span>${profile.emoji}</span></div><div class="lane-meta"><strong>${profile.name}</strong><b>${profile.points} puntos</b></div></div>`).join('')}
+        ${profiles.map((profile) => `<div class="race-lane"><div class="runner" style="width:${8 + (profile.points - minPoints) / pointRange * 92}%"><span>${profile.emoji}</span></div><div class="lane-meta"><strong>${profile.name}</strong><b>${profile.points} puntos</b></div></div>`).join('')}
       </div>
       <div class="scoreboard">
-        ${ordered.map((profile, index) => `<article class="score-card ${profile.slug === activeProfile ? 'mine' : ''}"><span class="place">${index + 1}</span><span class="profile-avatar small">${profile.emoji}</span><div><strong>${profile.name}</strong><small>${profile.sessions} sesiones · ${accuracy(profile)}% precisión</small></div><b>${profile.points}</b></article>`).join('')}
+        ${ordered.map((profile, index) => `<article class="score-card ${profile.slug === activeProfile ? 'mine' : ''}"><span class="place">${index + 1}</span><span class="profile-avatar small">${profile.emoji}</span><div><strong>${profile.name}</strong><small>${profile.competitionSessions || 0} desafíos · ${accuracy(profile)}% precisión</small></div><b>${profile.points}</b></article>`).join('')}
       </div>
       <div class="race-message">${difference === 0 ? '¡La carrera está empatada!' : `${ordered[1]?.name || ''} está a ${difference} puntos de alcanzar a ${ordered[0]?.name || ''}.`}</div>
+      <section class="competition-modules"><p class="eyebrow">ELEGÍ EL DESAFÍO</p><div class="module-grid">${modules.map((module) => `<button class="module-card" data-compete="${module.id}"><span class="module-icon">${module.icon}</span><span><small>${module.level}</small><strong>${module.title}</strong><p>Competencia de hasta 10 preguntas.</p></span><b>→</b></button>`).join('')}</div></section>
       <section class="comparison"><h2>Fortalezas y oportunidades</h2><div class="comparison-grid">${profiles.map((profile) => { const weak = weakestTopics(profile); return `<article><h3>${profile.emoji} ${profile.name}</h3>${weak.length ? weak.map((item) => `<p><span>${item.topic}</span><b>${item.accuracy}%</b></p>`).join('') : '<p class="muted">Completá dos o más preguntas por tema para obtener un diagnóstico.</p>'}</article>`; }).join('')}</div></section>
     </section>
   `, 'race');
+  document.querySelectorAll<HTMLElement>('[data-compete]').forEach((button) => button.onclick = () => startSession(button.dataset.compete!, 'competition'));
 }
 
-function startSession(moduleId: string) {
+function startSession(moduleId: string, mode: 'training' | 'competition') {
   const module = modules.find((item) => item.id === moduleId);
   const pool = moduleId === 'mix' ? modules.flatMap((item) => item.questions) : module?.questions || [];
   currentModule = module || { id: 'mix', icon: '祭', title: 'Repaso mixto', description: '', level: 'Lecciones 1–5', questions: pool };
   questions = shuffle(pool).slice(0, 10).map((question) => ({ ...question, choices: shuffle(question.choices) }));
-  questionIndex = 0; sessionCorrect = 0; sessionTopics = {}; review = [];
+  questionIndex = 0; sessionCorrect = 0; sessionTopics = {}; sessionMode = mode; sessionScore = 0; review = [];
   renderQuestion();
 }
 
@@ -169,11 +179,11 @@ function renderQuestion() {
   const question = questions[questionIndex];
   selectedAnswer = '';
   shell(`
-    <section class="practice-view"><div class="practice-head"><button class="icon-btn" data-action="exit">×</button><div><span>${questionIndex + 1} de ${questions.length}</span><div class="progress-track"><i style="width:${questionIndex / questions.length * 100}%"></i></div></div><b>${currentModule?.title}</b></div>
+    <section class="practice-view"><div class="practice-head"><button class="icon-btn" data-action="exit">×</button><div><span>${questionIndex + 1} de ${questions.length}</span><div class="progress-track"><i style="width:${questionIndex / questions.length * 100}%"></i></div></div><b>${currentModule?.title}</b></div><div class="mode-banner ${sessionMode}"><span>${sessionMode === 'competition' ? 'COMPETICIÓN' : 'ENTRENAMIENTO'}</span><strong id="liveScore">${sessionMode === 'competition' ? `${sessionScore >= 0 ? '+' : ''}${sessionScore} puntos` : 'Sin puntos'}</strong></div>
       <div class="question-shell"><div class="question-meta"><span>${question.topic}</span><span>${question.kind}</span></div><p class="question-prompt">${question.prompt}</p><div class="question-display">${question.display}</div>${question.reading ? `<div class="question-reading" aria-label="Lectura en kana">${question.reading}</div>` : ''}<div class="answer-grid">${question.choices.map((choice, index) => { const reading = kanaReadingFor(choice); return `<button class="answer" data-answer="${choice.replaceAll('"', '&quot;')}"><span>${String.fromCharCode(65 + index)}</span><span class="answer-text"><b>${choice}</b>${reading ? `<small>${reading}</small>` : ''}</span></button>`; }).join('')}</div><div id="feedback" class="feedback"></div><button id="checkBtn" class="primary-btn check-btn" disabled>Comprobar</button><button id="nextBtn" class="primary-btn check-btn hidden">Continuar →</button></div>
     </section>
-  `);
-  document.querySelector<HTMLElement>('[data-action="exit"]')!.onclick = renderTraining;
+  `, sessionMode === 'competition' ? 'race' : 'train');
+  document.querySelector<HTMLElement>('[data-action="exit"]')!.onclick = sessionMode === 'competition' ? renderRace : renderTraining;
   document.querySelectorAll<HTMLButtonElement>('[data-answer]').forEach((button) => button.onclick = () => {
     document.querySelectorAll('.answer').forEach((item) => item.classList.remove('selected'));
     button.classList.add('selected'); selectedAnswer = button.dataset.answer!; document.querySelector<HTMLButtonElement>('#checkBtn')!.disabled = false;
@@ -184,6 +194,7 @@ function renderQuestion() {
 function checkAnswer() {
   const question = questions[questionIndex];
   const correct = selectedAnswer === question.answer;
+  if (sessionMode === 'competition') sessionScore += correct ? 10 : -5;
   const stat = sessionTopics[question.topic] || { correct: 0, total: 0 };
   sessionTopics[question.topic] = { correct: stat.correct + (correct ? 1 : 0), total: stat.total + 1 };
   if (correct) sessionCorrect += 1; else review.push({ display: question.display, answer: question.answer, displayReading: question.reading || '', answerReading: kanaReadingFor(question.answer) });
@@ -191,20 +202,22 @@ function checkAnswer() {
   const feedback = document.querySelector('#feedback')!;
   feedback.className = `feedback ${correct ? 'good' : 'bad'}`;
   const answerReading = kanaReadingFor(question.answer);
-  feedback.innerHTML = `<strong>${correct ? '¡Muy bien! よくできました' : `La respuesta es “${question.answer}”${answerReading ? ` (${answerReading})` : ''}.`}</strong><p>${question.note}</p>`;
+  feedback.innerHTML = `<strong>${correct ? '¡Muy bien! よくできました' : `La respuesta es “${question.answer}”${answerReading ? ` (${answerReading})` : ''}.`}${sessionMode === 'competition' ? ` <span class="point-change ${correct ? 'positive' : 'negative'}">${correct ? '+10' : '−5'} puntos</span>` : ''}</strong><p>${question.note}</p>`;
+  const liveScore = document.querySelector<HTMLElement>('#liveScore');
+  if (liveScore && sessionMode === 'competition') liveScore.textContent = `${sessionScore >= 0 ? '+' : ''}${sessionScore} puntos`;
   document.querySelector('#checkBtn')!.classList.add('hidden');
   const next = document.querySelector<HTMLButtonElement>('#nextBtn')!;
   next.classList.remove('hidden'); next.onclick = () => { questionIndex += 1; questionIndex < questions.length ? renderQuestion() : finishSession(); };
 }
 
 async function finishSession() {
-  const earned = sessionCorrect * 10 + (sessionCorrect === questions.length ? 25 : 0);
+  const earned = sessionMode === 'competition' ? sessionScore : 0;
   let synced = true;
   try {
-    const response = await api.post('/api/sessions', { profile: activeProfile, module: currentModule?.id || 'mix', correct: sessionCorrect, total: questions.length, topics: sessionTopics });
+    const response = await api.post('/api/sessions', { profile: activeProfile, module: currentModule?.id || 'mix', correct: sessionCorrect, total: questions.length, topics: sessionTopics, mode: sessionMode });
     profiles = response.data.profiles;
   } catch { synced = false; }
-  shell(`<section class="results-view"><div class="results-card"><span class="result-stamp">${sessionCorrect === questions.length ? '満点' : '前進'}</span><p class="eyebrow">SESIÓN COMPLETADA</p><h1>${sessionCorrect >= 8 ? '¡Excelente trabajo!' : sessionCorrect >= 6 ? '¡Buen avance!' : 'Cada intento suma'}</h1><div class="result-score"><strong>${sessionCorrect}/${questions.length}</strong><span>+${earned} puntos</span></div>${!synced ? '<p class="sync-error">No pudimos sincronizar esta sesión. Revisá tu conexión antes de cerrar.</p>' : ''}<div class="review-list">${review.length ? `<h3>Para repasar</h3>${review.slice(0, 4).map((item) => `<p><span>${item.display}${item.displayReading ? `<small>${item.displayReading}</small>` : ''}</span><b>${item.answer}${item.answerReading ? `<small>${item.answerReading}</small>` : ''}</b></p>`).join('')}` : '<p class="perfect">Sesión perfecta: ganaste 25 puntos extra.</p>'}</div><button class="primary-btn" data-action="home">Volver a entrenar</button><button class="secondary-btn" data-action="race">Ver la carrera</button></div></section>`);
+  shell(`<section class="results-view"><div class="results-card"><span class="result-stamp">${sessionCorrect === questions.length ? '満点' : '前進'}</span><p class="eyebrow">${sessionMode === 'competition' ? 'DESAFÍO COMPLETADO' : 'ENTRENAMIENTO COMPLETADO'}</p><h1>${sessionCorrect >= 8 ? '¡Excelente trabajo!' : sessionCorrect >= 6 ? '¡Buen avance!' : 'Cada intento enseña'}</h1><div class="result-score"><strong>${sessionCorrect}/${questions.length}</strong><span>${sessionMode === 'competition' ? `${earned >= 0 ? '+' : ''}${earned} puntos en la carrera` : 'Práctica sin puntos'}</span></div>${!synced ? '<p class="sync-error">No pudimos sincronizar esta sesión. Revisá tu conexión antes de cerrar.</p>' : ''}<div class="review-list">${review.length ? `<h3>Para repasar</h3>${review.slice(0, 4).map((item) => `<p><span>${item.display}${item.displayReading ? `<small>${item.displayReading}</small>` : ''}</span><b>${item.answer}${item.answerReading ? `<small>${item.answerReading}</small>` : ''}</b></p>`).join('')}` : `<p class="perfect">${sessionMode === 'competition' ? 'Desafío perfecto: sumaste 100 puntos.' : 'Entrenamiento perfecto.'}</p>`}</div><button class="primary-btn" data-action="home">Volver a entrenar</button><button class="secondary-btn" data-action="race">Ver la carrera</button></div></section>`, sessionMode === 'competition' ? 'race' : 'train');
 }
 
 async function init() {
