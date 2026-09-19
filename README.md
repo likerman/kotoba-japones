@@ -2,6 +2,14 @@
 
 Aplicación web sin dependencias, basada en el contenido de `manual-japones`.
 
+## Aplicación pública
+
+La versión principal, con perfiles compartidos, estadísticas y competición, está disponible en:
+
+https://kotoba-duo-9hxrj0.v2.appdeploy.ai/
+
+Su código está en `cloud/`. La versión estática original se conserva como referencia y GitHub Pages redirige a la aplicación principal.
+
 ## Ejecutar
 
 Podés abrir `index.html` directamente o iniciar un servidor local:

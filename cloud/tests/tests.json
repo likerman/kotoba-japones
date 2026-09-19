@@ -1,0 +1,43 @@
+[
+  {
+    "name": "Elegir perfil y completar entrenamiento",
+    "sanity": true,
+    "viewport": "desktop",
+    "covers": ["selección de perfil", "sesión de entrenamiento", "POST /api/sessions", "puntos persistentes"],
+    "description": "Verifica el recorrido principal desde la elección del estudiante hasta el guardado de puntos.",
+    "steps": ["Elegir Jereさん", "Iniciar un repaso mixto y responder las diez preguntas", "Volver al inicio al completar la sesión"],
+    "expected": "El puntaje de Jereさん aumenta según sus aciertos y la sesión aparece en sus estadísticas."
+  },
+  {
+    "name": "Alternar perfiles sin mezclar estadísticas",
+    "viewport": "mobile",
+    "covers": ["perfiles Aimé y Jere", "GET /api/profiles", "aislamiento de progreso"],
+    "description": "Verifica que cada perfil conserve su propio avance.",
+    "steps": ["Elegir Aiméさん y observar sus estadísticas", "Abrir el selector de perfil", "Elegir Jereさん"],
+    "expected": "La cabecera y las estadísticas cambian al perfil elegido sin copiar el progreso del otro."
+  },
+  {
+    "name": "Comparar la carrera compartida",
+    "viewport": "desktop",
+    "covers": ["modo Competir", "clasificación", "distancia de puntos", "diagnóstico por tema"],
+    "description": "Verifica que la competición muestre el estado compartido de ambos estudiantes.",
+    "steps": ["Elegir cualquier perfil", "Abrir Competir", "Revisar la pista, clasificación y oportunidades"],
+    "expected": "Se muestran Aiméさん y Jereさん con puntos, sesiones, precisión y temas a reforzar."
+  },
+  {
+    "name": "Practicar contenido nuevo de Lecciones 1–5",
+    "viewport": "desktop",
+    "covers": ["profesiones y edad", "transporte", "fechas", "repaso Lecciones 1–5"],
+    "description": "Verifica que el contenido nuevo del manual esté disponible en entrenamiento.",
+    "steps": ["Abrir Bases y profesiones", "Responder y comprobar un desafío", "Volver y abrir Movimiento"],
+    "expected": "Los módulos presentan ejercicios del repaso actualizado y explican cada respuesta."
+  },
+  {
+    "name": "Exigir un perfil antes de entrenar",
+    "viewport": "mobile",
+    "covers": ["guardia de perfil", "estado inicial", "experiencia móvil"],
+    "description": "Verifica que una visita nueva no atribuya resultados al estudiante equivocado.",
+    "steps": ["Abrir la app en una sesión nueva", "Intentar entrar a Entrenar", "Observar la pantalla inicial"],
+    "expected": "La app solicita elegir Aiméさん o Jereさん antes de mostrar los módulos de entrenamiento."
+  }
+]
