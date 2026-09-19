@@ -89,7 +89,7 @@ function renderProfilePicker() {
     <section class="profile-screen">
       <p class="eyebrow">¿QUIÉN ENTRENA HOY?</p>
       <h1>Elegí tu perfil</h1>
-      <p class="lead">Cada respuesta alimenta tu progreso, tus temas a reforzar y la carrera compartida.</p>
+      <p class="lead">Podés entrenar sin puntos o entrar a Competir cuando quieras jugar por la carrera compartida.</p>
       <div class="profile-grid">
         ${profiles.map((profile) => `
           <button class="profile-card" data-profile="${profile.slug}">
