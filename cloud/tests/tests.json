@@ -27,10 +27,10 @@
   {
     "name": "Practicar contenido nuevo de Lecciones 1–5",
     "viewport": "desktop",
-    "covers": ["profesiones y edad", "transporte", "fechas", "repaso Lecciones 1–5"],
-    "description": "Verifica que el contenido nuevo del manual esté disponible en entrenamiento.",
-    "steps": ["Abrir Bases y profesiones", "Responder y comprobar un desafío", "Volver y abrir Movimiento"],
-    "expected": "Los módulos presentan ejercicios del repaso actualizado y explican cada respuesta."
+    "covers": ["profesiones y edad", "transporte", "fechas", "lecturas en kana", "repaso Lecciones 1–5"],
+    "description": "Verifica que el contenido nuevo del manual esté disponible y que ningún kanji de los ejercicios quede sin lectura.",
+    "steps": ["Abrir Bases y profesiones", "Buscar un desafío cuyo enunciado contenga kanji", "Comprobar que debajo figure su lectura en kana", "Abrir un ejercicio con opciones en kanji y revisar sus lecturas"],
+    "expected": "Los enunciados y las opciones con kanji muestran su lectura en hiragana o katakana y cada respuesta conserva su explicación."
   },
   {
     "name": "Exigir un perfil antes de entrenar",

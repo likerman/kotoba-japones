@@ -1,0 +1,51 @@
+.question-display {
+  margin-bottom: 4px;
+}
+
+.question-reading {
+  margin: 0 0 32px;
+  color: var(--coral);
+  font: 600 18px/1.5 'Noto Sans JP';
+  letter-spacing: .04em;
+  text-align: center;
+}
+
+.answer {
+  display: flex;
+  align-items: center;
+}
+
+.answer > span:first-child {
+  flex: 0 0 auto;
+}
+
+.answer-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.answer-text b {
+  font-weight: 600;
+}
+
+.answer-text small,
+.review-list small {
+  margin-top: 2px;
+  color: var(--coral);
+  font: 500 12px/1.4 'Noto Sans JP';
+}
+
+.review-list p {
+  gap: 20px;
+}
+
+.review-list p > span,
+.review-list p > b {
+  display: flex;
+  flex-direction: column;
+}
+
+.review-list p > b {
+  text-align: right;
+}

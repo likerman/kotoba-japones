@@ -1,6 +1,7 @@
 import { api } from '@appdeploy/client';
 import './styles.css';
-import { modules, type Module, type Question } from './data';
+import './kana.css';
+import { kanaReadingFor, modules, type Module, type Question } from './data';
 
 type TopicStats = Record<string, { correct: number; total: number }>;
 type Profile = {
@@ -26,7 +27,7 @@ let questionIndex = 0;
 let selectedAnswer = '';
 let sessionCorrect = 0;
 let sessionTopics: TopicStats = {};
-let review: Array<{ display: string; answer: string }> = [];
+let review: Array<{ display: string; answer: string; displayReading: string; answerReading: string }> = [];
 
 const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
 const currentUser = () => profiles.find((profile) => profile.slug === activeProfile);
@@ -169,7 +170,7 @@ function renderQuestion() {
   selectedAnswer = '';
   shell(`
     <section class="practice-view"><div class="practice-head"><button class="icon-btn" data-action="exit">×</button><div><span>${questionIndex + 1} de ${questions.length}</span><div class="progress-track"><i style="width:${questionIndex / questions.length * 100}%"></i></div></div><b>${currentModule?.title}</b></div>
-      <div class="question-shell"><div class="question-meta"><span>${question.topic}</span><span>${question.kind}</span></div><p class="question-prompt">${question.prompt}</p><div class="question-display">${question.display}</div><div class="answer-grid">${question.choices.map((choice, index) => `<button class="answer" data-answer="${choice.replaceAll('"', '&quot;')}"><span>${String.fromCharCode(65 + index)}</span>${choice}</button>`).join('')}</div><div id="feedback" class="feedback"></div><button id="checkBtn" class="primary-btn check-btn" disabled>Comprobar</button><button id="nextBtn" class="primary-btn check-btn hidden">Continuar →</button></div>
+      <div class="question-shell"><div class="question-meta"><span>${question.topic}</span><span>${question.kind}</span></div><p class="question-prompt">${question.prompt}</p><div class="question-display">${question.display}</div>${question.reading ? `<div class="question-reading" aria-label="Lectura en kana">${question.reading}</div>` : ''}<div class="answer-grid">${question.choices.map((choice, index) => { const reading = kanaReadingFor(choice); return `<button class="answer" data-answer="${choice.replaceAll('"', '&quot;')}"><span>${String.fromCharCode(65 + index)}</span><span class="answer-text"><b>${choice}</b>${reading ? `<small>${reading}</small>` : ''}</span></button>`; }).join('')}</div><div id="feedback" class="feedback"></div><button id="checkBtn" class="primary-btn check-btn" disabled>Comprobar</button><button id="nextBtn" class="primary-btn check-btn hidden">Continuar →</button></div>
     </section>
   `);
   document.querySelector<HTMLElement>('[data-action="exit"]')!.onclick = renderTraining;
@@ -185,11 +186,12 @@ function checkAnswer() {
   const correct = selectedAnswer === question.answer;
   const stat = sessionTopics[question.topic] || { correct: 0, total: 0 };
   sessionTopics[question.topic] = { correct: stat.correct + (correct ? 1 : 0), total: stat.total + 1 };
-  if (correct) sessionCorrect += 1; else review.push({ display: question.display, answer: question.answer });
+  if (correct) sessionCorrect += 1; else review.push({ display: question.display, answer: question.answer, displayReading: question.reading || '', answerReading: kanaReadingFor(question.answer) });
   document.querySelectorAll<HTMLButtonElement>('[data-answer]').forEach((button) => { button.disabled = true; if (button.dataset.answer === question.answer) button.classList.add('correct'); else if (button.dataset.answer === selectedAnswer) button.classList.add('wrong'); });
   const feedback = document.querySelector('#feedback')!;
   feedback.className = `feedback ${correct ? 'good' : 'bad'}`;
-  feedback.innerHTML = `<strong>${correct ? '¡Muy bien! よくできました' : `La respuesta es “${question.answer}”.`}</strong><p>${question.note}</p>`;
+  const answerReading = kanaReadingFor(question.answer);
+  feedback.innerHTML = `<strong>${correct ? '¡Muy bien! よくできました' : `La respuesta es “${question.answer}”${answerReading ? ` (${answerReading})` : ''}.`}</strong><p>${question.note}</p>`;
   document.querySelector('#checkBtn')!.classList.add('hidden');
   const next = document.querySelector<HTMLButtonElement>('#nextBtn')!;
   next.classList.remove('hidden'); next.onclick = () => { questionIndex += 1; questionIndex < questions.length ? renderQuestion() : finishSession(); };
@@ -202,7 +204,7 @@ async function finishSession() {
     const response = await api.post('/api/sessions', { profile: activeProfile, module: currentModule?.id || 'mix', correct: sessionCorrect, total: questions.length, topics: sessionTopics });
     profiles = response.data.profiles;
   } catch { synced = false; }
-  shell(`<section class="results-view"><div class="results-card"><span class="result-stamp">${sessionCorrect === questions.length ? '満点' : '前進'}</span><p class="eyebrow">SESIÓN COMPLETADA</p><h1>${sessionCorrect >= 8 ? '¡Excelente trabajo!' : sessionCorrect >= 6 ? '¡Buen avance!' : 'Cada intento suma'}</h1><div class="result-score"><strong>${sessionCorrect}/${questions.length}</strong><span>+${earned} puntos</span></div>${!synced ? '<p class="sync-error">No pudimos sincronizar esta sesión. Revisá tu conexión antes de cerrar.</p>' : ''}<div class="review-list">${review.length ? `<h3>Para repasar</h3>${review.slice(0, 4).map((item) => `<p><span>${item.display}</span><b>${item.answer}</b></p>`).join('')}` : '<p class="perfect">Sesión perfecta: ganaste 25 puntos extra.</p>'}</div><button class="primary-btn" data-action="home">Volver a entrenar</button><button class="secondary-btn" data-action="race">Ver la carrera</button></div></section>`);
+  shell(`<section class="results-view"><div class="results-card"><span class="result-stamp">${sessionCorrect === questions.length ? '満点' : '前進'}</span><p class="eyebrow">SESIÓN COMPLETADA</p><h1>${sessionCorrect >= 8 ? '¡Excelente trabajo!' : sessionCorrect >= 6 ? '¡Buen avance!' : 'Cada intento suma'}</h1><div class="result-score"><strong>${sessionCorrect}/${questions.length}</strong><span>+${earned} puntos</span></div>${!synced ? '<p class="sync-error">No pudimos sincronizar esta sesión. Revisá tu conexión antes de cerrar.</p>' : ''}<div class="review-list">${review.length ? `<h3>Para repasar</h3>${review.slice(0, 4).map((item) => `<p><span>${item.display}${item.displayReading ? `<small>${item.displayReading}</small>` : ''}</span><b>${item.answer}${item.answerReading ? `<small>${item.answerReading}</small>` : ''}</b></p>`).join('')}` : '<p class="perfect">Sesión perfecta: ganaste 25 puntos extra.</p>'}</div><button class="primary-btn" data-action="home">Volver a entrenar</button><button class="secondary-btn" data-action="race">Ver la carrera</button></div></section>`);
 }
 
 async function init() {
