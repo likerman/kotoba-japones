@@ -126,9 +126,18 @@ const voicedAndCombinedKana = [
   ['ぴょ', 'ピョ', 'pyo', 'ぴょんぴょん (pyonpyon, saltando) · ピョン (pyon)'],
 ] as const;
 
+const deferredKana = new Set(['ぢ', 'づ', 'ゔ', 'びゃ', 'ぴゃ']);
+
 const kanaCharacters: KanaEntry[] = [
-  ...basicKana.map(([hiragana, katakana, reading, example]) => ({ hiragana, katakana, reading, example })),
-  ...voicedAndCombinedKana.map(([hiragana, katakana, reading, example]) => ({ hiragana, katakana, reading, example })),
+  ...basicKana.map(([hiragana, katakana, reading, example]) => ({
+    hiragana,
+    katakana: katakana === 'ヲ' ? undefined : katakana,
+    reading,
+    example,
+  })),
+  ...voicedAndCombinedKana
+    .filter(([hiragana]) => !deferredKana.has(hiragana))
+    .map(([hiragana, katakana, reading, example]) => ({ hiragana, katakana, reading, example })),
 ];
 
 const uniqueReadings = [...new Set(kanaCharacters.map((entry) => entry.reading))];
@@ -225,7 +234,7 @@ export const modules: Module[] = [
   },
   {
     id: 'reading', icon: '読', title: 'Lectura de caracteres', level: 'Hiragana y katakana',
-    description: 'Reconocé cada carácter y revelá su lectura cuando necesites una pista.',
+    description: 'Practicá primero los caracteres de uso frecuente y revelá su lectura cuando necesites una pista.',
     questions: characterQuestions,
   },
 ];
