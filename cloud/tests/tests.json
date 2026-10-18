@@ -29,7 +29,7 @@
     "viewport": "desktop",
     "covers": ["variantes de ejercicios", "kana de uso frecuente", "hiragana", "katakana", "pista de lectura", "palabra asociada"],
     "description": "Verifica la práctica inicial de kana frecuentes, sonoros, combinados y especiales con ejemplos memorables.",
-    "steps": ["Abrir Lectura de caracteres", "Revelar y ocultar la lectura", "Responder y pulsar Comprobar", "Observar la palabra de ejemplo", "Repetir con hiragana, katakana, dakuten y sonidos combinados", "Encontrar っ, ッ o ー y revelar su función"],
+    "steps": ["Abrir Lectura de caracteres", "Revelar y ocultar la lectura", "Responder y pulsar Comprobar", "Confirmar que las dos tarjetas contienen palabras japonesas diferentes", "Repetir con hiragana, katakana, dakuten y sonidos combinados", "Encontrar っ, ッ o ー y revelar su función"],
     "expected": "Tras comprobar se muestran la lectura y dos palabras japonesas diferentes, grandes y de uso habitual, escritas en el mismo silabario; no aparecen kana marcados como raros o de uso muy limitado."
   },
   {
