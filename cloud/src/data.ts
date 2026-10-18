@@ -11,6 +11,9 @@ export type Question = {
   readingDisplay?: 'always' | 'reveal';
   example?: string;
   helpLabel?: string;
+  character?: string;
+  script?: 'hiragana' | 'katakana';
+  group?: string;
 };
 
 export type Module = {
@@ -217,19 +220,46 @@ const exampleFor = (entry: KanaEntry, script: 'hiragana' | 'katakana', character
 };
 
 const uniqueReadings = [...new Set(kanaCharacters.map((entry) => entry.reading))];
+const voicedCharacters = new Set('がぎぐげござじずぜぞだでどばびぶべぼぱぴぷぺぽガギグゲゴザジズゼゾダデドバビブベボパピプペポ'.split(''));
+const rowLabels: Record<string, string> = { k: 'Fila K', s: 'Fila S', t: 'Fila T', n: 'Fila N', h: 'Fila H', m: 'Fila M', y: 'Fila Y', r: 'Fila R', w: 'Fila W', g: 'Sonoros', z: 'Sonoros', j: 'Sonoros', d: 'Sonoros', b: 'Sonoros', p: 'Sonoros' };
+const groupFor = (character: string, reading: string) => {
+  if (character.length > 1) return 'Combinados';
+  if (voicedCharacters.has(character)) return 'Sonoros';
+  if (['a', 'i', 'u', 'e', 'o'].includes(reading)) return 'Vocales';
+  if (reading === 'n') return 'N final';
+  return rowLabels[reading[0]] || 'Especiales';
+};
+
 const characterQuestions = kanaCharacters.flatMap((entry) => {
   const readingIndex = uniqueReadings.indexOf(entry.reading);
   const distractors = [1, 3, 7].map((offset) => uniqueReadings[(readingIndex + offset) % uniqueReadings.length]);
   const choices = [entry.reading, ...distractors];
   const questions: Question[] = [];
-  if (entry.hiragana) questions.push(q('Lectura de hiragana', entry.hiragana, entry.reading, choices, `${entry.hiragana} se lee ${entry.reading}.`, '¿Cómo se lee este hiragana?', entry.reading, 'reveal', exampleFor(entry, 'hiragana', entry.hiragana)));
-  if (entry.katakana) questions.push(q('Lectura de katakana', entry.katakana, entry.reading, choices, `${entry.katakana} se lee ${entry.reading}.`, '¿Cómo se lee este katakana?', entry.reading, 'reveal', exampleFor(entry, 'katakana', entry.katakana)));
+  if (entry.hiragana) questions.push({ ...q('Lectura de hiragana', entry.hiragana, entry.reading, choices, `${entry.hiragana} se lee ${entry.reading}.`, '¿Cómo se lee este hiragana?', entry.reading, 'reveal', exampleFor(entry, 'hiragana', entry.hiragana)), character: entry.hiragana, script: 'hiragana', group: groupFor(entry.hiragana, entry.reading) });
+  if (entry.katakana) questions.push({ ...q('Lectura de katakana', entry.katakana, entry.reading, choices, `${entry.katakana} se lee ${entry.reading}.`, '¿Cómo se lee este katakana?', entry.reading, 'reveal', exampleFor(entry, 'katakana', entry.katakana)), character: entry.katakana, script: 'katakana', group: groupFor(entry.katakana, entry.reading) });
   return questions;
 }).concat([
   q('Signo especial de hiragana', 'っ　⇄　つ', 'duplica la consonante siguiente', ['duplica la consonante siguiente', 'alarga la vocal anterior', 'representa el sonido n', 'marca el objeto directo'], 'っ es una “tsu” pequeña. No se pronuncia sola: indica que la consonante que sigue se duplica.', '¿Qué función cumple el primer signo, っ pequeño?', 'tsu pequeña → consonante doble', 'reveal', 'きって (kitte, sello)|||ざっし (zasshi, revista)|||きっぷ (kippu, boleto)|||ちょっと (chotto, un poco)', 'función'),
   q('Signo especial de katakana', 'ッ　⇄　ツ', 'duplica la consonante siguiente', ['duplica la consonante siguiente', 'alarga la vocal anterior', 'representa el sonido n', 'marca el objeto directo'], 'ッ es una “tsu” pequeña. No se pronuncia sola: indica que la consonante que sigue se duplica.', '¿Qué función cumple el primer signo, ッ pequeño?', 'tsu pequeña → consonante doble', 'reveal', 'ベッド (beddo, cama)|||ワット (watto, watt)|||ロボット (robotto, robot)|||サッカー (sakkā, fútbol)', 'función'),
   q('Signo especial de katakana', 'ー', 'alarga la vocal anterior', ['alarga la vocal anterior', 'duplica la consonante siguiente', 'representa el sonido n', 'marca el objeto directo'], 'ー es la marca de vocal larga: extiende el sonido de la vocal anterior en palabras escritas en katakana.', '¿Qué función cumple esta marca en katakana?', 'marca de vocal larga', 'reveal', 'ケーキ (kēki, torta)|||コーヒー (kōhī, café)|||スーパー (sūpā, supermercado)|||タクシー (takushī, taxi)', 'función'),
 ]);
+
+const similarCharacterSets = [
+  ['し', 'つ'], ['さ', 'き'], ['ぬ', 'め', 'ね'], ['れ', 'わ'], ['は', 'ほ'],
+  ['シ', 'ツ'], ['ソ', 'ン'], ['ク', 'ケ', 'タ'], ['ヌ', 'ス'], ['ワ', 'ウ', 'フ'],
+];
+
+const characterQuestionByDisplay = new Map(characterQuestions.filter((question) => question.character).map((question) => [question.display, question]));
+export const similarCharacterQuestions = similarCharacterSets.flatMap((set) => set.map((character) => {
+  const question = characterQuestionByDisplay.get(character);
+  if (!question) return null;
+  const similarReadings = set.map((item) => characterQuestionByDisplay.get(item)?.answer).filter((reading): reading is string => Boolean(reading));
+  const fillers = uniqueReadings.filter((reading) => !similarReadings.includes(reading)).slice(0, Math.max(0, 4 - similarReadings.length));
+  return { ...question, topic: 'Caracteres parecidos', kind: 'Caracteres parecidos', choices: [...similarReadings, ...fillers] };
+})).filter((question): question is Question => Boolean(question));
+
+export const characterPracticeQuestions = characterQuestions.filter((question) => question.character);
+export const characterGroups = [...new Set(characterPracticeQuestions.map((question) => question.group).filter((group): group is string => Boolean(group)))];
 
 export const modules: Module[] = [
   {

@@ -1,6 +1,7 @@
 import { db, json, error, type RouterRoutes } from '@appdeploy/sdk';
 
 type TopicStats = Record<string, { correct: number; total: number }>;
+type CharacterStats = Record<string, { correct: number; total: number; reading: string; script: 'hiragana' | 'katakana' }>;
 type Profile = {
   slug: 'aime' | 'jere';
   name: string;
@@ -13,6 +14,7 @@ type Profile = {
   competitionSessions: number;
   perfectSessions: number;
   topicStats: TopicStats;
+  characterStats?: CharacterStats;
   lastPlayed: number | null;
 };
 
@@ -32,7 +34,7 @@ async function listProfiles() {
     ({ items } = await db.list<Profile>(TABLE, { limit: 10 }));
   }
   return items
-    .map((profile) => ({ ...profile, trainingSessions: profile.trainingSessions || 0, competitionSessions: profile.competitionSessions || 0 }))
+    .map((profile) => ({ ...profile, trainingSessions: profile.trainingSessions || 0, competitionSessions: profile.competitionSessions || 0, characterStats: profile.characterStats || {} }))
     .sort((a, b) => a.slug.localeCompare(b.slug));
 }
 
@@ -46,6 +48,7 @@ export const profileRoutes: RouterRoutes = {
       correct?: number;
       total?: number;
       topics?: TopicStats;
+      characters?: CharacterStats;
       mode?: 'training' | 'competition';
     };
 
@@ -76,6 +79,15 @@ export const profileRoutes: RouterRoutes = {
 
     const perfect = correct === total;
     const scoreDelta = mode === 'competition' ? correct * 10 - (total - correct) * 5 : 0;
+    const characterStats: CharacterStats = { ...(current.characterStats || {}) };
+    for (const [character, result] of Object.entries(payload.characters || {}).slice(0, 10)) {
+      const characterCorrect = Number(result.correct);
+      const characterTotal = Number(result.total);
+      if (!character || character.length > 3 || !Number.isInteger(characterCorrect) || !Number.isInteger(characterTotal) || characterTotal < 0 || characterCorrect < 0 || characterCorrect > characterTotal) continue;
+      if (result.script !== 'hiragana' && result.script !== 'katakana') continue;
+      const previous = characterStats[character] || { correct: 0, total: 0, reading: result.reading, script: result.script };
+      characterStats[character] = { correct: previous.correct + characterCorrect, total: previous.total + characterTotal, reading: result.reading, script: result.script };
+    }
     const updated: Profile = {
       slug: current.slug,
       name: current.name,
@@ -88,6 +100,7 @@ export const profileRoutes: RouterRoutes = {
       competitionSessions: (current.competitionSessions || 0) + (mode === 'competition' ? 1 : 0),
       perfectSessions: current.perfectSessions + (perfect ? 1 : 0),
       topicStats,
+      characterStats,
       lastPlayed: Date.now(),
     };
 

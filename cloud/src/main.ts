@@ -2,9 +2,10 @@ import { api } from '@appdeploy/client';
 import './styles.css';
 import './kana.css';
 import './modes.css';
-import { buildQuestionPool, kanaReadingFor, modules, type Module, type Question } from './data';
+import { buildQuestionPool, characterGroups, characterPracticeQuestions, kanaReadingFor, modules, similarCharacterQuestions, type Module, type Question } from './data';
 
 type TopicStats = Record<string, { correct: number; total: number }>;
+type CharacterStats = Record<string, { correct: number; total: number; reading: string; script: 'hiragana' | 'katakana' }>;
 type Profile = {
   id?: string;
   slug: 'aime' | 'jere';
@@ -18,6 +19,7 @@ type Profile = {
   competitionSessions?: number;
   perfectSessions: number;
   topicStats: TopicStats;
+  characterStats?: CharacterStats;
   lastPlayed: number | null;
 };
 
@@ -30,7 +32,9 @@ let questionIndex = 0;
 let selectedAnswer = '';
 let sessionCorrect = 0;
 let sessionTopics: TopicStats = {};
+let sessionCharacters: CharacterStats = {};
 let sessionMode: 'training' | 'competition' = 'training';
+let responseMode: 'choice' | 'typing' = 'choice';
 let sessionScore = 0;
 let review: Array<{ display: string; answer: string; displayReading: string; answerReading: string }> = [];
 
@@ -117,10 +121,18 @@ function weakestTopics(profile: Profile) {
     .slice(0, 3);
 }
 
+function difficultCharacters(profile: Profile) {
+  return Object.entries(profile.characterStats || {})
+    .filter(([, stat]) => stat.total >= 2 && stat.correct / stat.total < .8)
+    .sort(([, a], [, b]) => a.correct / a.total - b.correct / b.total)
+    .map(([character, stat]) => ({ character, ...stat, accuracy: Math.round(stat.correct / stat.total * 100) }));
+}
+
 function renderTraining() {
   if (!activeProfile || !currentUser()) return renderProfilePicker();
   const profile = currentUser()!;
   const weak = weakestTopics(profile);
+  const difficult = difficultCharacters(profile);
   shell(`
     <section class="home-view">
       <div class="hero">
@@ -133,12 +145,63 @@ function renderTraining() {
         <article><strong>${accuracy(profile)}%</strong><small>precisión general</small></article>
       </section>
       ${weak.length ? `<section class="weak-panel"><div><p class="eyebrow">PARA REFORZAR</p><h2>Tus próximos focos</h2></div><div class="weak-list">${weak.map((item) => `<span>${item.topic}<b>${item.accuracy}%</b></span>`).join('')}</div></section>` : ''}
+      ${difficult.length ? `<button class="character-alert" data-open-characters><span><small>TUS CARACTERES A REFORZAR</small><strong>${difficult.slice(0, 6).map((item) => item.character).join('　')}</strong></span><b>Practicar dificultades →</b></button>` : ''}
       <section class="section-block"><p class="eyebrow">ENTRENAMIENTO · SIN PUNTOS</p><h2>¿Qué querés practicar?</h2><div class="module-grid">
         ${modules.map((module) => `<button class="module-card" data-start="${module.id}"><span class="module-icon">${module.icon}</span><span><small>${module.level}</small><strong>${module.title}</strong><p>${module.description}</p></span><b>→</b></button>`).join('')}
       </div></section>
     </section>
   `);
-  document.querySelectorAll<HTMLElement>('[data-start]').forEach((button) => button.onclick = () => startSession(button.dataset.start!, 'training'));
+  document.querySelectorAll<HTMLElement>('[data-start]').forEach((button) => button.onclick = () => button.dataset.start === 'reading' ? renderCharacterHub() : startSession(button.dataset.start!, 'training'));
+  const characterAlert = document.querySelector<HTMLElement>('[data-open-characters]');
+  if (characterAlert) characterAlert.onclick = () => renderCharacterHub('both', 'Todos');
+}
+
+function renderCharacterHub(script: 'both' | 'hiragana' | 'katakana' = 'both', group = 'Todos') {
+  if (!activeProfile || !currentUser()) return renderProfilePicker();
+  const difficult = difficultCharacters(currentUser()!);
+  const available = characterPracticeQuestions.filter((question) => (script === 'both' || question.script === script) && (group === 'Todos' || question.group === group));
+  const scriptLabel = script === 'both' ? 'Ambos silabarios' : script === 'hiragana' ? 'Hiragana' : 'Katakana';
+  shell(`
+    <section class="character-hub">
+      <button class="back-link" data-action="train">← Volver a entrenamiento</button>
+      <p class="eyebrow">LECTURA DE CARACTERES</p><h1>Reconocer antes de leer</h1>
+      <p class="lead">Elegí qué querés practicar. Cada respuesta alimenta el mapa personal de caracteres fuertes y difíciles de ${currentUser()!.name}.</p>
+      <div class="character-progress"><span>Progreso registrado</span><strong>${Object.keys(currentUser()!.characterStats || {}).length}</strong><small>caracteres practicados</small></div>
+      <section class="filter-panel"><div><small>SILABARIO</small><div class="filter-row">
+        ${(['both', 'hiragana', 'katakana'] as const).map((value) => `<button class="filter-chip ${script === value ? 'active' : ''}" data-script="${value}">${value === 'both' ? 'Ambos' : value[0].toUpperCase() + value.slice(1)}</button>`).join('')}
+      </div></div><div><small>GRUPO</small><div class="filter-row group-row">
+        ${['Todos', ...characterGroups].map((value) => `<button class="filter-chip ${group === value ? 'active' : ''}" data-group="${value}">${value}</button>`).join('')}
+      </div></div></section>
+      <div class="learning-path">
+        <article class="path-card featured"><span class="path-number">1</span><div><small>RECONOCIMIENTO</small><h2>${scriptLabel} · ${group}</h2><p>Ves un carácter y elegís cómo se lee. Después aparecen dos palabras para asociarlo.</p><b>${available.length} caracteres disponibles</b></div><button class="primary-btn" data-character-mode="regular" ${available.length ? '' : 'disabled'}>Empezar →</button></article>
+        <article class="path-card"><span class="path-number">2</span><div><small>RECORDAR LA LECTURA</small><h2>Sin opciones</h2><p>Ves el carácter y escribís su lectura en rōmaji. Podés revelar la lectura si necesitás una pista.</p><b>Acepta vocales largas con o sin macrón</b></div><button class="primary-btn" data-character-mode="recall" ${available.length ? '' : 'disabled'}>Recordar →</button></article>
+        <article class="path-card"><span class="path-number">↔</span><div><small>CONTRASTES</small><h2>Caracteres parecidos</h2><p>Practicá juntos los que suelen confundirse visualmente, como シ・ツ y ソ・ン.</p></div><button class="secondary-btn" data-character-mode="similar">Practicar pares</button></article>
+        <article class="path-card"><span class="path-number">◎</span><div><small>REPASO PERSONAL</small><h2>Mis dificultades</h2><p>${difficult.length ? `Tenés ${difficult.length} caracteres por reforzar: ${difficult.slice(0, 6).map((item) => item.character).join('、')}.` : 'Aparecerá cuando hayas respondido al menos dos veces un carácter y tu precisión sea menor al 80%.'}</p></div><button class="secondary-btn" data-character-mode="difficult" ${difficult.length ? '' : 'disabled'}>Repasar errores</button></article>
+      </div>
+    </section>
+  `);
+  document.querySelectorAll<HTMLElement>('[data-script]').forEach((button) => button.onclick = () => renderCharacterHub(button.dataset.script as 'both' | 'hiragana' | 'katakana', group));
+  document.querySelectorAll<HTMLElement>('[data-group]').forEach((button) => button.onclick = () => renderCharacterHub(script, button.dataset.group!));
+  document.querySelectorAll<HTMLElement>('[data-character-mode]').forEach((button) => button.onclick = () => startCharacterSession(button.dataset.characterMode!, script, group));
+}
+
+function startCharacterSession(mode: string, script: 'both' | 'hiragana' | 'katakana', group: string) {
+  let pool = characterPracticeQuestions.filter((question) => (script === 'both' || question.script === script) && (group === 'Todos' || question.group === group));
+  let title = `${script === 'both' ? 'Hiragana y katakana' : script} · ${group}`;
+  if (mode === 'similar') {
+    pool = similarCharacterQuestions.filter((question) => script === 'both' || question.script === script);
+    title = 'Caracteres parecidos';
+  }
+  if (mode === 'difficult') {
+    const difficult = new Set(difficultCharacters(currentUser()!).map((item) => item.character));
+    pool = characterPracticeQuestions.filter((question) => difficult.has(question.display));
+    title = 'Mis dificultades';
+  }
+  currentModule = { id: 'reading', icon: '読', title, description: '', level: 'Reconocimiento', questions: pool };
+  responseMode = mode === 'recall' ? 'typing' : 'choice';
+  questions = shuffle(pool).slice(0, 10).map((question) => ({ ...question, choices: shuffle(question.choices) }));
+  questionIndex = 0; sessionCorrect = 0; sessionTopics = {}; sessionCharacters = {}; sessionMode = 'training'; sessionScore = 0; review = [];
+  renderQuestion();
 }
 
 function renderRace() {
@@ -170,8 +233,9 @@ function startSession(moduleId: string, mode: 'training' | 'competition') {
   const module = modules.find((item) => item.id === moduleId);
   const pool = buildQuestionPool(moduleId);
   currentModule = module || { id: 'mix', icon: '祭', title: 'Repaso mixto', description: '', level: 'Lecciones 1–5', questions: pool };
+  responseMode = 'choice';
   questions = shuffle(pool).slice(0, 10).map((question) => ({ ...question, choices: shuffle(question.choices) }));
-  questionIndex = 0; sessionCorrect = 0; sessionTopics = {}; sessionMode = mode; sessionScore = 0; review = [];
+  questionIndex = 0; sessionCorrect = 0; sessionTopics = {}; sessionCharacters = {}; sessionMode = mode; sessionScore = 0; review = [];
   renderQuestion();
 }
 
@@ -183,9 +247,12 @@ function renderQuestion() {
       ? `<div class="reading-help"><button class="reading-toggle" data-action="reading" data-help-label="${question.helpLabel || 'lectura'}" aria-expanded="false">Ver ${question.helpLabel || 'lectura'}</button><div class="question-reading hidden" id="questionReading" aria-live="polite">${question.reading}</div></div>`
       : `<div class="question-reading" aria-label="Lectura en kana">${question.reading}</div>`
     : '';
+  const answerArea = responseMode === 'typing'
+    ? `<div class="typing-answer"><label for="readingInput">Lectura en rōmaji</label><input id="readingInput" type="text" inputmode="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Ejemplo: shi" aria-describedby="typingHelp"><small id="typingHelp">No hace falta usar ō o ū: también podés escribir una o o una u simples.</small></div>`
+    : `<div class="answer-grid">${question.choices.map((choice, index) => { const reading = kanaReadingFor(choice); return `<button class="answer" data-answer="${choice.replaceAll('"', '&quot;')}"><span>${String.fromCharCode(65 + index)}</span><span class="answer-text"><b>${choice}</b>${reading ? `<small>${reading}</small>` : ''}</span></button>`; }).join('')}</div>`;
   shell(`
     <section class="practice-view"><div class="practice-head"><button class="icon-btn" data-action="exit">×</button><div><span>${questionIndex + 1} de ${questions.length}</span><div class="progress-track"><i style="width:${questionIndex / questions.length * 100}%"></i></div></div><b>${currentModule?.title}</b></div><div class="mode-banner ${sessionMode}"><span>${sessionMode === 'competition' ? 'COMPETICIÓN' : 'ENTRENAMIENTO'}</span><strong id="liveScore">${sessionMode === 'competition' ? `${sessionScore >= 0 ? '+' : ''}${sessionScore} puntos` : 'Sin puntos'}</strong></div>
-      <div class="question-shell"><div class="question-meta"><span>${question.topic}</span><span>${question.kind}</span></div><p class="question-prompt">${question.prompt}</p><div class="question-display">${question.display}</div>${readingHelp}<div class="answer-grid">${question.choices.map((choice, index) => { const reading = kanaReadingFor(choice); return `<button class="answer" data-answer="${choice.replaceAll('"', '&quot;')}"><span>${String.fromCharCode(65 + index)}</span><span class="answer-text"><b>${choice}</b>${reading ? `<small>${reading}</small>` : ''}</span></button>`; }).join('')}</div><div id="feedback" class="feedback"></div><button id="checkBtn" class="primary-btn check-btn" disabled>Comprobar</button><button id="nextBtn" class="primary-btn check-btn hidden">Continuar →</button></div>
+      <div class="question-shell"><div class="question-meta"><span>${question.topic}</span><span>${responseMode === 'typing' ? 'Sin opciones' : question.kind}</span></div><p class="question-prompt">${responseMode === 'typing' ? 'Escribí cómo se lee este carácter.' : question.prompt}</p><div class="question-display">${question.display}</div>${readingHelp}${answerArea}<div id="feedback" class="feedback"></div><button id="checkBtn" class="primary-btn check-btn" disabled>Comprobar</button><button id="nextBtn" class="primary-btn check-btn hidden">Continuar →</button></div>
     </section>
   `, sessionMode === 'competition' ? 'race' : 'train');
   document.querySelector<HTMLElement>('[data-action="exit"]')!.onclick = sessionMode === 'competition' ? renderRace : renderTraining;
@@ -202,17 +269,33 @@ function renderQuestion() {
     document.querySelectorAll('.answer').forEach((item) => item.classList.remove('selected'));
     button.classList.add('selected'); selectedAnswer = button.dataset.answer!; document.querySelector<HTMLButtonElement>('#checkBtn')!.disabled = false;
   });
+  const readingInput = document.querySelector<HTMLInputElement>('#readingInput');
+  if (readingInput) {
+    readingInput.focus();
+    readingInput.oninput = () => { selectedAnswer = readingInput.value.trim(); document.querySelector<HTMLButtonElement>('#checkBtn')!.disabled = !selectedAnswer; };
+    readingInput.onkeydown = (event) => { if (event.key === 'Enter' && readingInput.value.trim()) checkAnswer(); };
+  }
   document.querySelector<HTMLButtonElement>('#checkBtn')!.onclick = checkAnswer;
+}
+
+function normalizedReading(value: string) {
+  return value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll('ou', 'o').replaceAll('oo', 'o').replaceAll('uu', 'u');
 }
 
 function checkAnswer() {
   const question = questions[questionIndex];
-  const correct = selectedAnswer === question.answer;
+  const correct = responseMode === 'typing' ? normalizedReading(selectedAnswer) === normalizedReading(question.answer) : selectedAnswer === question.answer;
   if (sessionMode === 'competition') sessionScore += correct ? 10 : -5;
   const stat = sessionTopics[question.topic] || { correct: 0, total: 0 };
   sessionTopics[question.topic] = { correct: stat.correct + (correct ? 1 : 0), total: stat.total + 1 };
+  if (question.character && question.script) {
+    const characterStat = sessionCharacters[question.character] || { correct: 0, total: 0, reading: question.answer, script: question.script };
+    sessionCharacters[question.character] = { ...characterStat, correct: characterStat.correct + (correct ? 1 : 0), total: characterStat.total + 1 };
+  }
   if (correct) sessionCorrect += 1; else review.push({ display: question.display, answer: question.answer, displayReading: question.reading || '', answerReading: kanaReadingFor(question.answer) });
   document.querySelectorAll<HTMLButtonElement>('[data-answer]').forEach((button) => { button.disabled = true; if (button.dataset.answer === question.answer) button.classList.add('correct'); else if (button.dataset.answer === selectedAnswer) button.classList.add('wrong'); });
+  const readingInput = document.querySelector<HTMLInputElement>('#readingInput');
+  if (readingInput) { readingInput.disabled = true; readingInput.classList.add(correct ? 'correct' : 'wrong'); }
   const feedback = document.querySelector('#feedback')!;
   feedback.className = `feedback ${correct ? 'good' : 'bad'}`;
   const answerReading = kanaReadingFor(question.answer);
@@ -231,7 +314,7 @@ async function finishSession() {
   const earned = sessionMode === 'competition' ? sessionScore : 0;
   let synced = true;
   try {
-    const response = await api.post('/api/sessions', { profile: activeProfile, module: currentModule?.id || 'mix', correct: sessionCorrect, total: questions.length, topics: sessionTopics, mode: sessionMode });
+    const response = await api.post('/api/sessions', { profile: activeProfile, module: currentModule?.id || 'mix', correct: sessionCorrect, total: questions.length, topics: sessionTopics, characters: sessionCharacters, mode: sessionMode });
     profiles = response.data.profiles;
   } catch { synced = false; }
   shell(`<section class="results-view"><div class="results-card"><span class="result-stamp">${sessionCorrect === questions.length ? '満点' : '前進'}</span><p class="eyebrow">${sessionMode === 'competition' ? 'DESAFÍO COMPLETADO' : 'ENTRENAMIENTO COMPLETADO'}</p><h1>${sessionCorrect >= 8 ? '¡Excelente trabajo!' : sessionCorrect >= 6 ? '¡Buen avance!' : 'Cada intento enseña'}</h1><div class="result-score"><strong>${sessionCorrect}/${questions.length}</strong><span>${sessionMode === 'competition' ? `${earned >= 0 ? '+' : ''}${earned} puntos en la carrera` : 'Práctica sin puntos'}</span></div>${!synced ? '<p class="sync-error">No pudimos sincronizar esta sesión. Revisá tu conexión antes de cerrar.</p>' : ''}<div class="review-list">${review.length ? `<h3>Para repasar</h3>${review.slice(0, 4).map((item) => `<p><span>${item.display}${item.displayReading ? `<small>${item.displayReading}</small>` : ''}</span><b>${item.answer}${item.answerReading ? `<small>${item.answerReading}</small>` : ''}</b></p>`).join('')}` : `<p class="perfect">${sessionMode === 'competition' ? 'Desafío perfecto: sumaste 100 puntos.' : 'Entrenamiento perfecto.'}</p>`}</div><button class="primary-btn" data-action="home">Volver a entrenar</button><button class="secondary-btn" data-action="race">Ver la carrera</button></div></section>`, sessionMode === 'competition' ? 'race' : 'train');

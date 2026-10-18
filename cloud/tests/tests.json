@@ -27,10 +27,10 @@
   {
     "name": "Practicar variantes y lectura de caracteres",
     "viewport": "desktop",
-    "covers": ["variantes de ejercicios", "kana de uso frecuente", "hiragana", "katakana", "pista de lectura", "palabra asociada"],
-    "description": "Verifica la práctica inicial de kana frecuentes, sonoros, combinados y especiales con ejemplos memorables.",
-    "steps": ["Abrir Lectura de caracteres", "Revelar y ocultar la lectura", "Responder y pulsar Comprobar", "Confirmar que las dos tarjetas contienen palabras japonesas diferentes", "Repetir el ejercicio en nuevas sesiones y comprobar que las parejas cambian", "Repetir con hiragana, katakana, dakuten y sonidos combinados", "Encontrar っ, ッ o ー y revelar su función"],
-    "expected": "Tras comprobar se eligen al azar dos palabras japonesas diferentes del banco disponible. Las palabras son grandes, de uso habitual y están escritas en el mismo silabario; las parejas pueden variar entre intentos y no aparecen kana marcados como raros o de uso muy limitado."
+    "covers": ["panel de lectura", "nivel 1 reconocimiento", "nivel 2 recuerdo sin opciones", "entrada en romaji", "variantes de vocal larga", "filtros por silabario y grupo", "kana de uso frecuente", "hiragana", "katakana", "caracteres parecidos", "pista de lectura", "palabra asociada", "estadística por carácter", "repaso personal", "POST /api/sessions"],
+    "description": "Verifica los niveles de reconocimiento y recuerdo de kana, sus filtros y el registro personal de dificultades.",
+    "steps": ["Abrir Lectura de caracteres", "Elegir Katakana y un grupo", "Iniciar el nivel 1 y responder una opción", "Volver al panel e iniciar el nivel 2", "Escribir la lectura en romaji sin opciones y comprobarla", "Probar una vocal larga sin macrón", "Revelar y ocultar la lectura", "Confirmar que aparecen dos palabras japonesas diferentes", "Completar la sesión", "Abrir Caracteres parecidos y comprobar contrastes como シ・ツ o ソ・ン", "Responder mal un mismo carácter en dos sesiones y volver al panel"],
+    "expected": "Ambos niveles respetan los filtros y guardan cada resultado en el perfil activo. El nivel 2 acepta lecturas equivalentes con o sin macrón; tras comprobar aparecen dos palabras diferentes. Los caracteres con menos de 80% después de dos intentos aparecen en Mis dificultades."
   },
   {
     "name": "Exigir un perfil antes de entrenar",
