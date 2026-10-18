@@ -174,14 +174,46 @@ const extraExamples: Record<string, string> = {
 
 const japaneseWord = (example: string) => example.split(' (')[0].trim();
 
+// Vocabulario adicional de uso cotidiano. Se conserva el silabario natural de cada
+// palabra y se usa para que un mismo carácter no muestre siempre la misma pareja.
+const everydayExamples: Record<'hiragana' | 'katakana', string[]> = {
+  hiragana: [
+    'あさごはん (asagohan, desayuno)', 'いっしょ (issho, juntos)', 'うち (uchi, casa)', 'えいが (eiga, película)', 'おかし (okashi, dulce)',
+    'かいしゃ (kaisha, empresa)', 'きっぷ (kippu, boleto)', 'くに (kuni, país)', 'けいたい (keitai, celular)', 'ここ (koko, aquí)',
+    'さくら (sakura, cerezo)', 'しごと (shigoto, trabajo)', 'すいようび (suiyōbi, miércoles)', 'せんせい (sensei, profesor)', 'そこ (soko, allí)',
+    'たべもの (tabemono, comida)', 'ちかてつ (chikatetsu, subte)', 'つくえ (tsukue, escritorio)', 'てがみ (tegami, carta)', 'ともだち (tomodachi, amigo)',
+    'なまえ (namae, nombre)', 'にほん (nihon, Japón)', 'ぬいぐるみ (nuigurumi, peluche)', 'ねます (nemasu, dormir)', 'のみもの (nomimono, bebida)',
+    'はたらきます (hatarakimasu, trabajar)', 'ひるやすみ (hiruyasumi, descanso del mediodía)', 'ふたり (futari, dos personas)', 'へいじつ (heijitsu, día hábil)', 'ほうじちゃ (hōjicha, té tostado)',
+    'まいにち (mainichi, todos los días)', 'みせ (mise, tienda)', 'むいか (muika, día seis)', 'めいし (meishi, tarjeta personal)', 'もくようび (mokuyōbi, jueves)',
+    'やさい (yasai, verdura)', 'ゆうびんきょく (yūbinkyoku, correo)', 'よみます (yomimasu, leer)', 'らいしゅう (raishū, semana próxima)', 'りょうり (ryōri, cocina)',
+    'るす (rusu, ausencia)', 'れいぞうこ (reizōko, heladera)', 'ろくじ (rokuji, las seis)', 'わたし (watashi, yo)', 'でんしゃ (densha, tren)',
+    'きゃくさま (kyakusama, cliente)', 'きゅうじつ (kyūjitsu, feriado)', 'きょうしつ (kyōshitsu, aula)', 'しゃしん (shashin, foto)', 'しゅくだい (shukudai, tarea)',
+    'しょうゆ (shōyu, salsa de soja)', 'ちゃわん (chawan, cuenco)', 'ちゅうごく (Chūgoku, China)', 'ちょうしょく (chōshoku, desayuno)', 'にゅうがく (nyūgaku, ingreso escolar)',
+    'ひゃく (hyaku, cien)', 'ひょう (hyō, leopardo)', 'みょうじ (myōji, apellido)', 'りゅうがくせい (ryūgakusei, estudiante extranjero)', 'りょこう (ryokō, viaje)',
+    'ぎゅうにゅう (gyūnyū, leche)', 'じゅぎょう (jugyō, clase)', 'じょうず (jōzu, hábil)', 'びょういん (byōin, hospital)', 'ぴょんぴょん (pyonpyon, saltando)',
+  ],
+  katakana: [
+    'アイスクリーム (aisukurīmu, helado)', 'エレベーター (erebētā, ascensor)', 'オレンジジュース (orenjijūsu, jugo de naranja)', 'カレンダー (karendā, calendario)', 'ケータイ (kētai, celular)',
+    'サッカー (sakkā, fútbol)', 'セーター (sētā, suéter)', 'ソフト (sofuto, programa)', 'テレビ (terebi, televisión)', 'ホテル (hoteru, hotel)',
+    'ネット (netto, internet)', 'ハンバーガー (hanbāgā, hamburguesa)', 'ヘッドホン (heddohon, auriculares)', 'メロン (meron, melón)', 'ヨーグルト (yōguruto, yogur)',
+    'キャラクター (kyarakutā, personaje)', 'キュウリ (kyūri, pepino)', 'シャワー (shawā, ducha)', 'シャンプー (shanpū, champú)', 'ティッシュ (tisshu, pañuelo de papel)',
+    'ショッピング (shoppingu, compras)', 'チャーハン (chāhan, arroz frito)', 'チューブ (chūbu, tubo)', 'チョーク (chōku, tiza)', 'ニューヨーク (Nyūyōku, Nueva York)',
+    'メニュー (menyū, menú)', 'ヒューマン (hyūman, humano)', 'ヒューズ (hyūzu, fusible)', 'ミュージアム (myūjiamu, museo)', 'ミュージカル (myūjikaru, musical)',
+    'ギャップ (gyappu, brecha)', 'ギャラリー (gyararī, galería)', 'レギュラー (regyurā, regular)', 'ジャズ (jazu, jazz)', 'ジャケット (jaketto, chaqueta)',
+    'ジュニア (junia, juvenil)', 'ジュエリー (juerī, joyería)', 'ジョブ (jobu, trabajo)', 'ジョーク (jōku, chiste)', 'デビュー (debyū, debut)',
+    'コンピューター (konpyūtā, computadora)', 'ピューレ (pyūre, puré)', 'ピョンピョン (pyonpyon, saltando)', 'ロボット (robotto, robot)', 'スーパー (sūpā, supermercado)',
+  ],
+};
+
 const exampleFor = (entry: KanaEntry, script: 'hiragana' | 'katakana', character: string) => {
   const exampleIndex = script === 'hiragana' ? 0 : 1;
   const primary = entry.example.split(' · ')[exampleIndex];
   const alternative = kanaCharacters
     .map((candidate) => candidate.example.split(' · ')[exampleIndex])
     .find((candidate) => candidate && japaneseWord(candidate) !== japaneseWord(primary) && japaneseWord(candidate).includes(character));
-  const examples = [primary, alternative, extraExamples[character]].filter((example): example is string => Boolean(example));
-  return examples.filter((example, index) => examples.findIndex((item) => japaneseWord(item) === japaneseWord(example)) === index).slice(0, 2).join('|||');
+  const everyday = everydayExamples[script].filter((example) => japaneseWord(example).includes(character));
+  const examples = [primary, alternative, extraExamples[character], ...everyday].filter((example): example is string => Boolean(example));
+  return examples.filter((example, index) => examples.findIndex((item) => japaneseWord(item) === japaneseWord(example)) === index).join('|||');
 };
 
 const uniqueReadings = [...new Set(kanaCharacters.map((entry) => entry.reading))];
@@ -194,9 +226,9 @@ const characterQuestions = kanaCharacters.flatMap((entry) => {
   if (entry.katakana) questions.push(q('Lectura de katakana', entry.katakana, entry.reading, choices, `${entry.katakana} se lee ${entry.reading}.`, '¿Cómo se lee este katakana?', entry.reading, 'reveal', exampleFor(entry, 'katakana', entry.katakana)));
   return questions;
 }).concat([
-  q('Signo especial de hiragana', 'っ　⇄　つ', 'duplica la consonante siguiente', ['duplica la consonante siguiente', 'alarga la vocal anterior', 'representa el sonido n', 'marca el objeto directo'], 'っ es una “tsu” pequeña. No se pronuncia sola: indica que la consonante que sigue se duplica.', '¿Qué función cumple el primer signo, っ pequeño?', 'tsu pequeña → consonante doble', 'reveal', 'きって (kitte, sello)|||ざっし (zasshi, revista)', 'función'),
-  q('Signo especial de katakana', 'ッ　⇄　ツ', 'duplica la consonante siguiente', ['duplica la consonante siguiente', 'alarga la vocal anterior', 'representa el sonido n', 'marca el objeto directo'], 'ッ es una “tsu” pequeña. No se pronuncia sola: indica que la consonante que sigue se duplica.', '¿Qué función cumple el primer signo, ッ pequeño?', 'tsu pequeña → consonante doble', 'reveal', 'ベッド (beddo, cama)|||ワット (watto, watt)', 'función'),
-  q('Signo especial de katakana', 'ー', 'alarga la vocal anterior', ['alarga la vocal anterior', 'duplica la consonante siguiente', 'representa el sonido n', 'marca el objeto directo'], 'ー es la marca de vocal larga: extiende el sonido de la vocal anterior en palabras escritas en katakana.', '¿Qué función cumple esta marca en katakana?', 'marca de vocal larga', 'reveal', 'ケーキ (kēki, torta)|||コーヒー (kōhī, café)', 'función'),
+  q('Signo especial de hiragana', 'っ　⇄　つ', 'duplica la consonante siguiente', ['duplica la consonante siguiente', 'alarga la vocal anterior', 'representa el sonido n', 'marca el objeto directo'], 'っ es una “tsu” pequeña. No se pronuncia sola: indica que la consonante que sigue se duplica.', '¿Qué función cumple el primer signo, っ pequeño?', 'tsu pequeña → consonante doble', 'reveal', 'きって (kitte, sello)|||ざっし (zasshi, revista)|||きっぷ (kippu, boleto)|||ちょっと (chotto, un poco)', 'función'),
+  q('Signo especial de katakana', 'ッ　⇄　ツ', 'duplica la consonante siguiente', ['duplica la consonante siguiente', 'alarga la vocal anterior', 'representa el sonido n', 'marca el objeto directo'], 'ッ es una “tsu” pequeña. No se pronuncia sola: indica que la consonante que sigue se duplica.', '¿Qué función cumple el primer signo, ッ pequeño?', 'tsu pequeña → consonante doble', 'reveal', 'ベッド (beddo, cama)|||ワット (watto, watt)|||ロボット (robotto, robot)|||サッカー (sakkā, fútbol)', 'función'),
+  q('Signo especial de katakana', 'ー', 'alarga la vocal anterior', ['alarga la vocal anterior', 'duplica la consonante siguiente', 'representa el sonido n', 'marca el objeto directo'], 'ー es la marca de vocal larga: extiende el sonido de la vocal anterior en palabras escritas en katakana.', '¿Qué función cumple esta marca en katakana?', 'marca de vocal larga', 'reveal', 'ケーキ (kēki, torta)|||コーヒー (kōhī, café)|||スーパー (sūpā, supermercado)|||タクシー (takushī, taxi)', 'función'),
 ]);
 
 export const modules: Module[] = [

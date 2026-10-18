@@ -218,7 +218,7 @@ function checkAnswer() {
   const answerReading = kanaReadingFor(question.answer);
   const rawExamples = question.example?.split('|||') || [];
   const exampleWord = (example: string) => example.split(' (')[0].trim();
-  const examples = rawExamples.filter((example, index) => rawExamples.findIndex((item) => exampleWord(item) === exampleWord(example)) === index);
+  const examples = shuffle(rawExamples.filter((example, index) => rawExamples.findIndex((item) => exampleWord(item) === exampleWord(example)) === index)).slice(0, 2);
   feedback.innerHTML = `<strong>${correct ? '¡Muy bien! よくできました' : `La respuesta es “${question.answer}”${answerReading ? ` (${answerReading})` : ''}.`}${sessionMode === 'competition' ? ` <span class="point-change ${correct ? 'positive' : 'negative'}">${correct ? '+10' : '−5'} puntos</span>` : ''}</strong><p>${question.note}</p>${examples.length ? `<div class="example-word"><span>PALABRAS PARA ASOCIAR</span><div>${examples.map((example) => `<b>${example}</b>`).join('')}</div></div>` : ''}`;
   const liveScore = document.querySelector<HTMLElement>('#liveScore');
   if (liveScore && sessionMode === 'competition') liveScore.textContent = `${sessionScore >= 0 ? '+' : ''}${sessionScore} puntos`;
