@@ -25,12 +25,12 @@
     "expected": "La pantalla muestra +10 por acierto y −5 por error; al finalizar, el resultado neto modifica sólo el puntaje del perfil activo."
   },
   {
-    "name": "Practicar contenido nuevo de Lecciones 1–5",
+    "name": "Practicar variantes y lectura de caracteres",
     "viewport": "desktop",
-    "covers": ["profesiones y edad", "transporte", "fechas", "lecturas en kana", "repaso Lecciones 1–5"],
-    "description": "Verifica que el contenido nuevo del manual esté disponible y que ningún kanji de los ejercicios quede sin lectura.",
-    "steps": ["Abrir Bases y profesiones", "Buscar un desafío cuyo enunciado contenga kanji", "Comprobar que debajo figure su lectura en kana", "Abrir un ejercicio con opciones en kanji y revisar sus lecturas en escritorio y móvil"],
-    "expected": "Los enunciados y las opciones con kanji se ven completos, sin recortes; la simbología japonesa es el texto principal y su lectura en kana aparece debajo."
+    "covers": ["variantes de ejercicios", "módulo Lectura de caracteres", "hiragana", "katakana", "pista de lectura"],
+    "description": "Verifica que haya sesiones variadas y una práctica específica para reconocer caracteres.",
+    "steps": ["Abrir Lectura de caracteres", "Observar un hiragana o katakana sin la lectura revelada", "Pulsar Ver lectura", "Ocultar la lectura y responder", "Iniciar otra sesión y comparar la selección de preguntas"],
+    "expected": "La lectura puede mostrarse y ocultarse antes de responder; las sesiones toman muestras distintas de un banco amplio de caracteres y variantes."
   },
   {
     "name": "Exigir un perfil antes de entrenar",

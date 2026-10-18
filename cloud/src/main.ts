@@ -2,7 +2,7 @@ import { api } from '@appdeploy/client';
 import './styles.css';
 import './kana.css';
 import './modes.css';
-import { kanaReadingFor, modules, type Module, type Question } from './data';
+import { buildQuestionPool, kanaReadingFor, modules, type Module, type Question } from './data';
 
 type TopicStats = Record<string, { correct: number; total: number }>;
 type Profile = {
@@ -168,7 +168,7 @@ function renderRace() {
 
 function startSession(moduleId: string, mode: 'training' | 'competition') {
   const module = modules.find((item) => item.id === moduleId);
-  const pool = moduleId === 'mix' ? modules.flatMap((item) => item.questions) : module?.questions || [];
+  const pool = buildQuestionPool(moduleId);
   currentModule = module || { id: 'mix', icon: '祭', title: 'Repaso mixto', description: '', level: 'Lecciones 1–5', questions: pool };
   questions = shuffle(pool).slice(0, 10).map((question) => ({ ...question, choices: shuffle(question.choices) }));
   questionIndex = 0; sessionCorrect = 0; sessionTopics = {}; sessionMode = mode; sessionScore = 0; review = [];
@@ -178,12 +178,25 @@ function startSession(moduleId: string, mode: 'training' | 'competition') {
 function renderQuestion() {
   const question = questions[questionIndex];
   selectedAnswer = '';
+  const readingHelp = question.reading
+    ? question.readingDisplay === 'reveal'
+      ? `<div class="reading-help"><button class="reading-toggle" data-action="reading" aria-expanded="false">Ver lectura</button><div class="question-reading hidden" id="questionReading" aria-live="polite">${question.reading}</div></div>`
+      : `<div class="question-reading" aria-label="Lectura en kana">${question.reading}</div>`
+    : '';
   shell(`
     <section class="practice-view"><div class="practice-head"><button class="icon-btn" data-action="exit">×</button><div><span>${questionIndex + 1} de ${questions.length}</span><div class="progress-track"><i style="width:${questionIndex / questions.length * 100}%"></i></div></div><b>${currentModule?.title}</b></div><div class="mode-banner ${sessionMode}"><span>${sessionMode === 'competition' ? 'COMPETICIÓN' : 'ENTRENAMIENTO'}</span><strong id="liveScore">${sessionMode === 'competition' ? `${sessionScore >= 0 ? '+' : ''}${sessionScore} puntos` : 'Sin puntos'}</strong></div>
-      <div class="question-shell"><div class="question-meta"><span>${question.topic}</span><span>${question.kind}</span></div><p class="question-prompt">${question.prompt}</p><div class="question-display">${question.display}</div>${question.reading ? `<div class="question-reading" aria-label="Lectura en kana">${question.reading}</div>` : ''}<div class="answer-grid">${question.choices.map((choice, index) => { const reading = kanaReadingFor(choice); return `<button class="answer" data-answer="${choice.replaceAll('"', '&quot;')}"><span>${String.fromCharCode(65 + index)}</span><span class="answer-text"><b>${choice}</b>${reading ? `<small>${reading}</small>` : ''}</span></button>`; }).join('')}</div><div id="feedback" class="feedback"></div><button id="checkBtn" class="primary-btn check-btn" disabled>Comprobar</button><button id="nextBtn" class="primary-btn check-btn hidden">Continuar →</button></div>
+      <div class="question-shell"><div class="question-meta"><span>${question.topic}</span><span>${question.kind}</span></div><p class="question-prompt">${question.prompt}</p><div class="question-display">${question.display}</div>${readingHelp}<div class="answer-grid">${question.choices.map((choice, index) => { const reading = kanaReadingFor(choice); return `<button class="answer" data-answer="${choice.replaceAll('"', '&quot;')}"><span>${String.fromCharCode(65 + index)}</span><span class="answer-text"><b>${choice}</b>${reading ? `<small>${reading}</small>` : ''}</span></button>`; }).join('')}</div><div id="feedback" class="feedback"></div><button id="checkBtn" class="primary-btn check-btn" disabled>Comprobar</button><button id="nextBtn" class="primary-btn check-btn hidden">Continuar →</button></div>
     </section>
   `, sessionMode === 'competition' ? 'race' : 'train');
   document.querySelector<HTMLElement>('[data-action="exit"]')!.onclick = sessionMode === 'competition' ? renderRace : renderTraining;
+  const readingToggle = document.querySelector<HTMLButtonElement>('[data-action="reading"]');
+  if (readingToggle) readingToggle.onclick = () => {
+    const reading = document.querySelector<HTMLElement>('#questionReading')!;
+    const willShow = reading.classList.contains('hidden');
+    reading.classList.toggle('hidden', !willShow);
+    readingToggle.textContent = willShow ? 'Ocultar lectura' : 'Ver lectura';
+    readingToggle.setAttribute('aria-expanded', String(willShow));
+  };
   document.querySelectorAll<HTMLButtonElement>('[data-answer]').forEach((button) => button.onclick = () => {
     document.querySelectorAll('.answer').forEach((item) => item.classList.remove('selected'));
     button.classList.add('selected'); selectedAnswer = button.dataset.answer!; document.querySelector<HTMLButtonElement>('#checkBtn')!.disabled = false;

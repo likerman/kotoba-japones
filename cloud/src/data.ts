@@ -8,6 +8,7 @@ export type Question = {
   note: string;
   hint?: string;
   reading?: string;
+  readingDisplay?: 'always' | 'reveal';
 };
 
 export type Module = {
@@ -48,7 +49,7 @@ const kanaReadings: Record<string, string> = {
 
 export const kanaReadingFor = (text: string) => kanaReadings[text] || '';
 
-const q = (topic: string, display: string, answer: string, choices: string[], note: string, prompt = 'Elegí la opción correcta.'): Question => ({
+const q = (topic: string, display: string, answer: string, choices: string[], note: string, prompt = 'Elegí la opción correcta.', reading?: string, readingDisplay: 'always' | 'reveal' = 'always'): Question => ({
   topic,
   kind: topic,
   prompt,
@@ -56,7 +57,30 @@ const q = (topic: string, display: string, answer: string, choices: string[], no
   answer,
   choices,
   note,
-  reading: kanaReadingFor(display) || undefined,
+  reading: reading || kanaReadingFor(display) || undefined,
+  readingDisplay,
+});
+
+const kanaCharacters = [
+  ['あ', 'ア', 'a'], ['い', 'イ', 'i'], ['う', 'ウ', 'u'], ['え', 'エ', 'e'], ['お', 'オ', 'o'],
+  ['か', 'カ', 'ka'], ['き', 'キ', 'ki'], ['く', 'ク', 'ku'], ['け', 'ケ', 'ke'], ['こ', 'コ', 'ko'],
+  ['さ', 'サ', 'sa'], ['し', 'シ', 'shi'], ['す', 'ス', 'su'], ['せ', 'セ', 'se'], ['そ', 'ソ', 'so'],
+  ['た', 'タ', 'ta'], ['ち', 'チ', 'chi'], ['つ', 'ツ', 'tsu'], ['て', 'テ', 'te'], ['と', 'ト', 'to'],
+  ['な', 'ナ', 'na'], ['に', 'ニ', 'ni'], ['ぬ', 'ヌ', 'nu'], ['ね', 'ネ', 'ne'], ['の', 'ノ', 'no'],
+  ['は', 'ハ', 'ha'], ['ひ', 'ヒ', 'hi'], ['ふ', 'フ', 'fu'], ['へ', 'ヘ', 'he'], ['ほ', 'ホ', 'ho'],
+  ['ま', 'マ', 'ma'], ['み', 'ミ', 'mi'], ['む', 'ム', 'mu'], ['め', 'メ', 'me'], ['も', 'モ', 'mo'],
+  ['や', 'ヤ', 'ya'], ['ゆ', 'ユ', 'yu'], ['よ', 'ヨ', 'yo'],
+  ['ら', 'ラ', 'ra'], ['り', 'リ', 'ri'], ['る', 'ル', 'ru'], ['れ', 'レ', 're'], ['ろ', 'ロ', 'ro'],
+  ['わ', 'ワ', 'wa'], ['を', 'ヲ', 'wo'], ['ん', 'ン', 'n'],
+] as const;
+
+const characterQuestions = kanaCharacters.flatMap(([hiragana, katakana, romaji], index) => {
+  const distractors = [1, 2, 4].map((offset) => kanaCharacters[(index + offset) % kanaCharacters.length][2]);
+  const choices = [romaji, ...distractors];
+  return [
+    q('Lectura de hiragana', hiragana, romaji, choices, `${hiragana} se lee ${romaji}.`, '¿Cómo se lee este hiragana?', romaji, 'reveal'),
+    q('Lectura de katakana', katakana, romaji, choices, `${katakana} se lee ${romaji}.`, '¿Cómo se lee este katakana?', romaji, 'reveal'),
+  ];
 });
 
 export const modules: Module[] = [
@@ -135,6 +159,59 @@ export const modules: Module[] = [
       q('Negación total', '日曜日 どこへ 行きましたか。', 'どこへも 行きませんでした', ['どこへも 行きませんでした', '東京へ 行きます', '何で 行きました', '家族と 来ました'], 'どこへも + verbo negativo significa “a ningún lugar”.'),
     ],
   },
+  {
+    id: 'reading', icon: '読', title: 'Lectura de caracteres', level: 'Hiragana y katakana',
+    description: 'Reconocé cada carácter y revelá su lectura cuando necesites una pista.',
+    questions: characterQuestions,
+  },
 ];
+
+const foundationVariants = [
+  ['わたし', '学生', 'がくせい', 'estudiante'],
+  ['マリアさん', '会社員', 'かいしゃいん', 'empleado de empresa'],
+  ['ワンさん', '銀行員', 'ぎんこういん', 'empleado de banco'],
+  ['サントスさん', '医者', 'いしゃ', 'médico'],
+].flatMap(([person, profession, professionReading, meaning]) => [
+  q('Bases', `${person} ___ ${profession}です。`, 'は', ['は', 'も', 'か', 'の'], 'は marca el tema de la oración.', 'Elegí la partícula correcta.', `${person} ___ ${professionReading}です。`),
+  q('Negación', `${person}は ${profession} ___。`, 'じゃありません', ['じゃありません', 'です', 'も', 'か'], 'じゃありません forma la negación cortés.', 'Completá la forma negativa.', `${person}は ${professionReading} ___。`),
+  q('Profesiones', meaning, profession, ['学生', '会社員', '銀行員', '医者'], `${profession}（${professionReading}）significa “${meaning}”.`, 'Elegí la palabra japonesa correcta.'),
+]);
+
+const objectVariants = [
+  ['本', 'ほん'], ['傘', 'かさ'], ['時計', 'とけい'], ['辞書', 'じしょ'],
+].flatMap(([noun, nounReading]) => [
+  q('Demostrativos', `___ ${noun}は わたしのです。`, 'この', ['この', 'これ', 'ここ', 'どの'], 'この acompaña a un sustantivo cercano.', 'Elegí el demostrativo correcto.', `___ ${nounReading}は わたしのです。`),
+  q('Posesión', `この ${noun}は ___ ですか。`, 'だれの', ['だれの', 'どこ', 'いくら', 'いつ'], 'だれの pregunta de quién es algo.', 'Elegí el interrogativo correcto.', `この ${nounReading}は ___ ですか。`),
+]);
+
+const routineVariants = [
+  ['6', 'ろく'], ['7', 'しち'], ['8', 'はち'], ['9', 'く'], ['10', 'じゅう'], ['11', 'じゅういち'],
+].flatMap(([hour, hourReading]) => [
+  q('Formas verbales', `毎朝 ${hour}時に ___。`, '起きます', ['起きます', '起きました', '寝ました', '休みます'], '毎朝 indica un hábito y pide la forma ～ます.', 'Elegí la forma verbal correcta.', `まいあさ ${hourReading}じに ___。`),
+  q('Partículas de tiempo', `${hour}時 ___ 勉強します。`, 'に', ['に', 'まで', 'へ', 'と'], 'に marca una hora concreta.', 'Elegí la partícula correcta.', `${hourReading}じ ___ べんきょうします。`),
+]);
+
+const movementVariants = [
+  ['東京', 'とうきょう'], ['京都', 'きょうと'], ['日本', 'にほん'], ['会社', 'かいしゃ'],
+].flatMap(([destination, destinationReading]) => [
+  q('Movimiento', `${destination} ___ 行きます。`, 'へ', ['へ', 'で', 'と', 'まで'], 'へ marca dirección o destino.', 'Elegí la partícula correcta.', `${destinationReading} ___ いきます。`),
+  q('Transporte', `バス ___ ${destination}へ 行きます。`, 'で', ['で', 'へ', 'と', 'に'], 'で indica el medio de transporte.', 'Elegí la partícula correcta.', `バス ___ ${destinationReading}へ いきます。`),
+  q('Compañía', `友達 ___ ${destination}へ 行きます。`, 'と', ['と', 'で', 'へ', 'から'], 'と indica con quién se realiza la acción.', 'Elegí la partícula correcta.', `ともだち ___ ${destinationReading}へ いきます。`),
+]);
+
+const generatedVariants: Record<string, Question[]> = {
+  foundations: foundationVariants,
+  objects: objectVariants,
+  routines: routineVariants,
+  movement: movementVariants,
+};
+
+export function buildQuestionPool(moduleId: string) {
+  if (moduleId === 'mix') {
+    return modules.flatMap((module) => [...module.questions, ...(generatedVariants[module.id] || [])]);
+  }
+  const module = modules.find((item) => item.id === moduleId);
+  return module ? [...module.questions, ...(generatedVariants[moduleId] || [])] : [];
+}
 
 export const allTopics = [...new Set(modules.flatMap((module) => module.questions.map((question) => question.topic)))];

@@ -18,7 +18,7 @@ type Profile = {
 
 const TABLE = 'kotoba_profiles_v1';
 const allowedProfiles = new Set(['aime', 'jere']);
-const allowedModules = new Set(['foundations', 'writing', 'objects', 'routines', 'movement', 'mix']);
+const allowedModules = new Set(['foundations', 'writing', 'objects', 'routines', 'movement', 'reading', 'mix']);
 
 const initialProfiles: Profile[] = [
   { slug: 'aime', name: 'Aiméさん', emoji: '桜', points: 0, correct: 0, total: 0, sessions: 0, trainingSessions: 0, competitionSessions: 0, perfectSessions: 0, topicStats: {}, lastPlayed: null },

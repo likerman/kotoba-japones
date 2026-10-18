@@ -10,6 +10,31 @@
   text-align: center;
 }
 
+.reading-help {
+  min-height: 66px;
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+.reading-help .question-reading {
+  margin: 8px 0 0;
+}
+
+.reading-toggle {
+  padding: 8px 13px;
+  border: 1px solid var(--coral);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--coral);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reading-toggle:hover {
+  background: color-mix(in srgb, var(--coral) 12%, transparent);
+}
+
 .answer {
   display: flex;
   align-items: center;
