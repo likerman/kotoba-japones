@@ -180,7 +180,7 @@ function renderQuestion() {
   selectedAnswer = '';
   const readingHelp = question.reading
     ? question.readingDisplay === 'reveal'
-      ? `<div class="reading-help"><button class="reading-toggle" data-action="reading" aria-expanded="false">Ver lectura</button><div class="question-reading hidden" id="questionReading" aria-live="polite">${question.reading}</div></div>`
+      ? `<div class="reading-help"><button class="reading-toggle" data-action="reading" data-help-label="${question.helpLabel || 'lectura'}" aria-expanded="false">Ver ${question.helpLabel || 'lectura'}</button><div class="question-reading hidden" id="questionReading" aria-live="polite">${question.reading}</div></div>`
       : `<div class="question-reading" aria-label="Lectura en kana">${question.reading}</div>`
     : '';
   shell(`
@@ -194,7 +194,8 @@ function renderQuestion() {
     const reading = document.querySelector<HTMLElement>('#questionReading')!;
     const willShow = reading.classList.contains('hidden');
     reading.classList.toggle('hidden', !willShow);
-    readingToggle.textContent = willShow ? 'Ocultar lectura' : 'Ver lectura';
+    const helpLabel = readingToggle.dataset.helpLabel || 'lectura';
+    readingToggle.textContent = willShow ? `Ocultar ${helpLabel}` : `Ver ${helpLabel}`;
     readingToggle.setAttribute('aria-expanded', String(willShow));
   };
   document.querySelectorAll<HTMLButtonElement>('[data-answer]').forEach((button) => button.onclick = () => {

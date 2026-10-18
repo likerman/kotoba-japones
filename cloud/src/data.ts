@@ -10,6 +10,7 @@ export type Question = {
   reading?: string;
   readingDisplay?: 'always' | 'reveal';
   example?: string;
+  helpLabel?: string;
 };
 
 export type Module = {
@@ -50,7 +51,7 @@ const kanaReadings: Record<string, string> = {
 
 export const kanaReadingFor = (text: string) => kanaReadings[text] || '';
 
-const q = (topic: string, display: string, answer: string, choices: string[], note: string, prompt = 'Elegí la opción correcta.', reading?: string, readingDisplay: 'always' | 'reveal' = 'always', example?: string): Question => ({
+const q = (topic: string, display: string, answer: string, choices: string[], note: string, prompt = 'Elegí la opción correcta.', reading?: string, readingDisplay: 'always' | 'reveal' = 'always', example?: string, helpLabel?: string): Question => ({
   topic,
   kind: topic,
   prompt,
@@ -61,6 +62,7 @@ const q = (topic: string, display: string, answer: string, choices: string[], no
   reading: reading || kanaReadingFor(display) || undefined,
   readingDisplay,
   example,
+  helpLabel,
 });
 
 type KanaEntry = { hiragana?: string; katakana?: string; reading: string; example: string };
@@ -124,15 +126,9 @@ const voicedAndCombinedKana = [
   ['ぴょ', 'ピョ', 'pyo', 'ぴょんぴょん (pyonpyon, saltando) · ピョン (pyon)'],
 ] as const;
 
-const specialKana: KanaEntry[] = [
-  { hiragana: 'っ', katakana: 'ッ', reading: 'consonante doble', example: 'きって (kitte, sello) · ベッド (beddo, cama)' },
-  { katakana: 'ー', reading: 'vocal larga', example: 'ケーキ (kēki, torta) · コーヒー (kōhī, café)' },
-];
-
 const kanaCharacters: KanaEntry[] = [
   ...basicKana.map(([hiragana, katakana, reading, example]) => ({ hiragana, katakana, reading, example })),
   ...voicedAndCombinedKana.map(([hiragana, katakana, reading, example]) => ({ hiragana, katakana, reading, example })),
-  ...specialKana,
 ];
 
 const uniqueReadings = [...new Set(kanaCharacters.map((entry) => entry.reading))];
@@ -144,7 +140,11 @@ const characterQuestions = kanaCharacters.flatMap((entry) => {
   if (entry.hiragana) questions.push(q('Lectura de hiragana', entry.hiragana, entry.reading, choices, `${entry.hiragana} se lee ${entry.reading}.`, '¿Cómo se lee este hiragana?', entry.reading, 'reveal', entry.example));
   if (entry.katakana) questions.push(q('Lectura de katakana', entry.katakana, entry.reading, choices, `${entry.katakana} se lee ${entry.reading}.`, '¿Cómo se lee este katakana?', entry.reading, 'reveal', entry.example));
   return questions;
-});
+}).concat([
+  q('Signo especial de hiragana', 'っ　⇄　つ', 'duplica la consonante siguiente', ['duplica la consonante siguiente', 'alarga la vocal anterior', 'representa el sonido n', 'marca el objeto directo'], 'っ es una “tsu” pequeña. No se pronuncia sola: indica que la consonante que sigue se duplica.', '¿Qué función cumple el primer signo, っ pequeño?', 'tsu pequeña → consonante doble', 'reveal', 'きって (kitte, sello) · ざっし (zasshi, revista)', 'función'),
+  q('Signo especial de katakana', 'ッ　⇄　ツ', 'duplica la consonante siguiente', ['duplica la consonante siguiente', 'alarga la vocal anterior', 'representa el sonido n', 'marca el objeto directo'], 'ッ es una “tsu” pequeña. No se pronuncia sola: indica que la consonante que sigue se duplica.', '¿Qué función cumple el primer signo, ッ pequeño?', 'tsu pequeña → consonante doble', 'reveal', 'ベッド (beddo, cama) · ワット (watto, watt)', 'función'),
+  q('Signo especial de katakana', 'ー', 'alarga la vocal anterior', ['alarga la vocal anterior', 'duplica la consonante siguiente', 'representa el sonido n', 'marca el objeto directo'], 'ー es la marca de vocal larga: extiende el sonido de la vocal anterior en palabras escritas en katakana.', '¿Qué función cumple esta marca en katakana?', 'marca de vocal larga', 'reveal', 'ケーキ (kēki, torta) · コーヒー (kōhī, café)', 'función'),
+]);
 
 export const modules: Module[] = [
   {
