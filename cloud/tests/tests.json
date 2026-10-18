@@ -3,9 +3,9 @@
     "name": "Elegir perfil y completar entrenamiento",
     "sanity": true,
     "viewport": "desktop",
-    "covers": ["selección de perfil", "sesión de entrenamiento", "capítulo 6", "を como objeto", "で como lugar de acción", "invitaciones y propuestas", "POST /api/sessions", "práctica sin puntos"],
-    "description": "Verifica que el entrenamiento del capítulo 6 registre aprendizaje sin modificar la carrera.",
-    "steps": ["Elegir Jereさん y anotar su puntaje", "Abrir Acciones e invitaciones", "Responder ejercicios con を, で, ～ませんか y ～ましょう", "Completar las diez preguntas y volver al inicio"],
+    "covers": ["selección de perfil", "sesión de entrenamiento", "contenido de las lecciones 1 a 6", "demostrativos y lugares", "formas verbales", "movimiento", "を como objeto", "で como lugar de acción", "invitaciones y propuestas", "POST /api/sessions", "práctica sin puntos"],
+    "description": "Verifica que las lecciones 1 a 6 estén disponibles y que entrenar registre aprendizaje sin modificar la carrera.",
+    "steps": ["Elegir Jereさん y anotar su puntaje", "Confirmar que aparecen los módulos de las lecciones 1 a 6", "Abrir Acciones e invitaciones", "Responder ejercicios con を, で, ～ませんか y ～ましょう", "Completar las diez preguntas y volver al inicio"],
     "expected": "La sesión alimenta las estadísticas de Jereさん, pero su puntaje competitivo no cambia."
   },
   {
