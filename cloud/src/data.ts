@@ -47,6 +47,14 @@ const kanaReadings: Record<string, string> = {
   '何': 'なん', '来週': 'らいしゅう', '毎日': 'まいにち',
   'どこへも 行きませんでした': 'どこへも いきませんでした', '東京へ 行きます': 'とうきょうへ いきます',
   '何で 行きました': 'なんで いきました', '家族と 来ました': 'かぞくと きました',
+  '食べます': 'たべます', '飲みます': 'のみます', '見ます': 'みます', '聞きます': 'ききます',
+  '読みます': 'よみます', '書きます': 'かきます', '買います': 'かいます', '撮ります': 'とります',
+  '会います': 'あいます', '休みましょう': 'やすみましょう', '見ませんか': 'みませんか',
+  '食べませんでした': 'たべませんでした', '日本語を 勉強しました': 'にほんごを べんきょうしました',
+  '見ました': 'みました', '見ませんでした': 'みませんでした',
+  '休みますか': 'やすみますか', '休みません': 'やすみません', '休みました': 'やすみました',
+  '会いましょう': 'あいましょう', '会いますか': 'あいますか', '会いません': 'あいません', '会いました': 'あいました',
+  '駅へ 行きます': 'えきへ いきます', '友達と 来ました': 'ともだちと きました', '7時に 起きます': 'しちじに おきます',
 };
 
 export const kanaReadingFor = (text: string) => kanaReadings[text] || '';
@@ -254,6 +262,24 @@ export const modules: Module[] = [
     ],
   },
   {
+    id: 'actions', icon: '食', title: 'Acciones e invitaciones', level: 'Lección 6',
+    description: 'Objeto con を, lugar de la acción con で, invitaciones y propuestas.',
+    questions: [
+      q('Objeto directo', 'パン ___ 食べます。', 'を', ['を', 'で', 'へ', 'と'], 'を marca aquello sobre lo que recae la acción.', 'Elegí la partícula correcta.', 'パン ___ たべます。'),
+      q('Lugar de la acción', 'レストラン ___ ごはんを 食べます。', 'で', ['で', 'を', 'へ', 'に'], 'で marca el lugar donde se realiza una acción.', 'Elegí la partícula correcta.', 'レストラン ___ ごはんを たべます。'),
+      q('Objeto directo', '毎朝 何 ___ 飲みますか。', 'を', ['を', 'で', 'と', 'に'], '何を pregunta qué cosa recibe la acción.', 'Elegí la partícula correcta.', 'まいあさ なに ___ のみますか。'),
+      q('Negación total', 'きのう 何も ___。', '食べませんでした', ['食べませんでした', '食べます', '飲みます', '見ます'], '何も + verbo negativo significa “nada”.', 'Completá la respuesta.', 'きのう なにも ___。'),
+      q('Acciones', '日曜日 何を しましたか。', '日本語を 勉強しました', ['日本語を 勉強しました', '駅へ 行きます', '友達と 来ました', '7時に 起きます'], 'Para contar una actividad usamos el objeto con を y luego el verbo.', 'Elegí una respuesta posible.', 'にちようび なにを しましたか。'),
+      q('Invitaciones', 'いっしょに 映画を ___。', '見ませんか', ['見ませんか', '見ます', '見ました', '見ませんでした'], '～ませんか convierte la forma negativa cortés en una invitación amable.', 'Completá la invitación.', 'いっしょに えいがを ___。'),
+      q('Propuestas', 'ちょっと ___。', '休みましょう', ['休みましょう', '休みますか', '休みません', '休みました'], '～ましょう propone hacer algo juntos: “descansemos”.', 'Completá la propuesta.', 'ちょっと ___。'),
+      q('Propuestas', 'あした 10時に 駅で ___。', '会いましょう', ['会いましょう', '会いますか', '会いません', '会いました'], '会いましょう significa “encontrémonos”.', 'Completá la propuesta.', 'あした じゅうじに えきで ___。'),
+      q('Vocabulario', '食べます', 'comer', ['comer', 'beber', 'leer', 'comprar'], '食べます（たべます）· tabemasu · comer.', '¿Qué significa este verbo?', 'たべます'),
+      q('Vocabulario', '飲みます', 'beber', ['beber', 'comer', 'escuchar', 'escribir'], '飲みます（のみます）· nomimasu · beber.', '¿Qué significa este verbo?', 'のみます'),
+      q('Vocabulario', '読みます', 'leer', ['leer', 'mirar', 'escribir', 'comprar'], '読みます（よみます）· yomimasu · leer.', '¿Qué significa este verbo?', 'よみます'),
+      q('Vocabulario', '買います', 'comprar', ['comprar', 'sacar una foto', 'encontrarse', 'escuchar'], '買います（かいます）· kaimasu · comprar.', '¿Qué significa este verbo?', 'かいます'),
+    ],
+  },
+  {
     id: 'reading', icon: '読', title: 'Lectura de caracteres', level: 'Hiragana y katakana',
     description: 'Practicá primero los caracteres de uso frecuente y revelá su lectura cuando necesites una pista.',
     questions: characterQuestions,
@@ -293,11 +319,23 @@ const movementVariants = [
   q('Compañía', `友達 ___ ${destination}へ 行きます。`, 'と', ['と', 'で', 'へ', 'から'], 'と indica con quién se realiza la acción.', 'Elegí la partícula correcta.', `ともだち ___ ${destinationReading}へ いきます。`),
 ]);
 
+const actionVariants = [
+  ['くだもの', 'comer fruta'], ['にく', 'comer carne'], ['やさい', 'comer verduras'], ['パン', 'comer pan'],
+].map(([food, meaning]) => q('Objeto directo', `${food} ___ 食べます。`, 'を', ['を', 'で', 'へ', 'と'], `を marca el objeto: “${meaning}”.`, 'Elegí la partícula correcta.', `${food} ___ たべます。`));
+
+const invitationVariants = [
+  ['テニスを しませんか。', 'テニスを しませんか。', '¿Jugamos al tenis?'],
+  ['いっしょに ごはんを 食べませんか。', 'いっしょに ごはんを たべませんか。', '¿Comemos juntos?'],
+  ['映画を 見ませんか。', 'えいがを みませんか。', '¿Vemos una película?'],
+  ['ちょっと 休みましょう。', 'ちょっと やすみましょう。', 'Descansemos un poco.'],
+].map(([display, reading, meaning]) => q('Invitaciones', display, meaning, [meaning, '¿Dónde está?', '¿Cuánto cuesta?', 'No hice nada.'], '～ませんか invita; ～ましょう propone hacer algo juntos.', 'Elegí el significado correcto.', reading));
+
 const generatedVariants: Record<string, Question[]> = {
   foundations: foundationVariants,
   objects: objectVariants,
   routines: routineVariants,
   movement: movementVariants,
+  actions: [...actionVariants, ...invitationVariants],
 };
 
 export function buildQuestionPool(moduleId: string) {
