@@ -140,17 +140,23 @@ const voicedAndCombinedKana = [
 ] as const;
 
 const deferredKana = new Set(['ぢ', 'づ', 'ゔ', 'びゃ', 'ぴゃ']);
+const deferredKatakana = new Set(['ヲ', 'ヒャ', 'ミャ', 'ミョ', 'リャ', 'リョ', 'ビョ']);
 
 const kanaCharacters: KanaEntry[] = [
   ...basicKana.map(([hiragana, katakana, reading, example]) => ({
     hiragana,
-    katakana: katakana === 'ヲ' ? undefined : katakana,
+    katakana: deferredKatakana.has(katakana) ? undefined : katakana,
     reading,
     example,
   })),
   ...voicedAndCombinedKana
     .filter(([hiragana]) => !deferredKana.has(hiragana))
-    .map(([hiragana, katakana, reading, example]) => ({ hiragana, katakana, reading, example })),
+    .map(([hiragana, katakana, reading, example]) => ({
+      hiragana,
+      katakana: deferredKatakana.has(katakana) ? undefined : katakana,
+      reading,
+      example,
+    })),
 ];
 
 const extraExamples: Record<string, string> = {
@@ -158,21 +164,24 @@ const extraExamples: Record<string, string> = {
   ぐ: 'ぐあい (guai, estado)', げ: 'げんかん (genkan, entrada)', ざ: 'ざせき (zaseki, asiento)', ぜ: 'ぜひ (zehi, sin falta)', ぞ: 'ぞうきん (zōkin, trapo)', で: 'でぐち (deguchi, salida)', ば: 'ばしょ (basho, lugar)', べ: 'べんとう (bentō, vianda)', ぼ: 'ぼたん (botan, botón)', ぱ: 'ぱちぱち (pachipachi, aplausos)', ぷ: 'ぷかぷか (pukapuka, flotando)', ぺ: 'ぺこぺこ (pekopeko, con hambre)', ぽ: 'ぽんぽん (ponpon, suavemente)',
   きゃ: 'きゃくしつ (kyakushitsu, habitación de huéspedes)', きゅ: 'きゅうけい (kyūkei, descanso)', きょ: 'きょねん (kyonen, año pasado)', しゃ: 'しゃかい (shakai, sociedad)', しゅ: 'しゅみ (shumi, pasatiempo)', ちゅ: 'ちゅうい (chūi, atención)', ちょ: 'ちょうど (chōdo, justo)', にゃ: 'にゃんにゃん (nyannyan, miau)', にょ: 'にょきにょき (nyokinyoki, brotando)',
   ひゃ: 'ひゃくえん (hyakuen, cien yenes)', ひゅ: 'ひゅっと (hyutto, rápidamente)', ひょ: 'ひょうか (hyōka, evaluación)', みゃ: 'みゃくはく (myakuhaku, pulso)', みゅ: 'みゅうみゅう (myūmyū, maullido)', みょ: 'みょうにち (myōnichi, mañana)', りゃ: 'りゃくご (ryakugo, abreviatura)', りゅ: 'りゅうがく (ryūgaku, estudiar en el extranjero)', りょ: 'りょこう (ryokō, viaje)',
-  ぎゃ: 'ぎゃくてん (gyakuten, remontada)', ぎゅ: 'ぎゅうどん (gyūdon, arroz con carne)', じゃ: 'じゃぐち (jaguchi, canilla)', じゅ: 'じゅうしょ (jūsho, dirección)', じょ: 'じょせい (josei, mujer)', びゅ: 'びゅうびゅう (byūbyū, viento fuerte)', びょ: 'びょうき (byōki, enfermedad)', ぴゅ: 'ぴゅっと (pyutto, de golpe)', ぴょ: 'ぴょこぴょこ (pyokopyoko, dando saltitos)',
+  ぎゃ: 'ぎゃくてん (gyakuten, remontada)', ぎゅ: 'ぎゅうどん (gyūdon, arroz con carne)', じゃ: 'じゃぐち (jaguchi, canilla)', じゅ: 'じゅうしょ (jūsho, dirección)', じょ: 'じょせい (josei, mujer)', びゅ: 'びゅっと (byutto, rápidamente)', びょ: 'びょうき (byōki, enfermedad)', ぴゅ: 'ぴゅっと (pyutto, de golpe)', ぴょ: 'ぴょこぴょこ (pyokopyoko, dando saltitos)',
   エ: 'エアコン (eakon, aire acondicionado)', カ: 'カレー (karē, curry)', ケ: 'ケチャップ (kechappu, kétchup)', サ: 'サンドイッチ (sandoicchi, sándwich)', セ: 'センター (sentā, centro)', ソ: 'ソース (sōsu, salsa)', ナ: 'ナンバー (nanbā, número)', ヌ: 'カヌー (kanū, canoa)', ネ: 'ネット (netto, internet)', ハ: 'ハム (hamu, jamón)', ヘ: 'ヘルメット (herumetto, casco)', ヤ: 'タイヤ (taiya, neumático)', ユ: 'ユーモア (yūmoa, humor)', ヨ: 'ヨガ (yoga)', ワ: 'シャワー (shawā, ducha)',
-  ゲ: 'ゲスト (gesuto, invitado)', ゴ: 'ゴール (gōru, meta)', ゼ: 'ゼリー (zerī, gelatina)', ゾ: 'ゾンビ (zonbi, zombi)', ペ: 'ページ (pēji, página)', ポ: 'ポケット (poketto, bolsillo)',
+  ゲ: 'ゲスト (gesuto, invitado)', ゴ: 'ゴール (gōru, meta)', ゼ: 'ゼリー (zerī, gelatina)', ゾ: 'ゾンビ (zonbi, zombi)', パ: 'パーティー (pātī, fiesta)', ペ: 'ページ (pēji, página)', ポ: 'ポケット (poketto, bolsillo)',
   キャ: 'キャンプ (kyanpu, campamento)', キュ: 'キュート (kyūto, adorable)', キョ: 'キョロキョロ (kyorokyoro, mirar alrededor)', シャ: 'シャワー (shawā, ducha)', シュ: 'シュート (shūto, tiro)', ショ: 'ショー (shō, espectáculo)', チャ: 'チャレンジ (charenji, desafío)', チュ: 'チューリップ (chūrippu, tulipán)', チョ: 'チョコレート (chokorēto, chocolate)',
-  ニャ: 'ニャンコ (nyanko, gatito)', ニョ: 'ニョロニョロ (nyoronyoro, serpenteando)', ヒャ: 'ヒャッホー (hyahhō, exclamación)', ヒュ: 'ヒューマン (hyūman, humano)', ヒョ: 'ヒョウ (hyō, leopardo)', ミャ: 'ミャンマー (Myanmā, Myanmar)', ミュ: 'ミュージカル (myūjikaru, musical)', ミョ: 'ミョウガ (myōga, jengibre japonés)',
-  リャ: 'リャマ (ryama, llama)', リュ: 'リュックサック (ryukkusakku, mochila)', リョ: 'リョウ (Ryō, nombre)', ギャ: 'ギャラリー (gyararī, galería)', ギュ: 'ギュッ (gyu, apretar)', ギョ: 'ギョーザ (gyōza, empanadilla)', ジャ: 'ジャケット (jaketto, chaqueta)', ジュ: 'ジュエリー (juerī, joyería)', ジョ: 'ジョーク (jōku, chiste)', ビュ: 'ビューラー (byūrā, rizador de pestañas)', ビョ: 'ビョーク (Byōku, Björk)', ピュ: 'ピュア (pyua, puro)', ピョ: 'ピョン (pyon, salto)',
+  ニャ: 'ニャンコ (nyanko, gatito)', ニョ: 'ニョロニョロ (nyoronyoro, serpenteando)', ヒャ: 'ヒャッホー (hyahhō, exclamación)', ヒュ: 'ヒューマン (hyūman, humano)', ヒョ: 'ヒョロヒョロ (hyorohyoro, delgado y débil)', ミャ: 'ミャンマー (Myanmā, Myanmar)', ミュ: 'ミュージカル (myūjikaru, musical)', ミョ: 'ミョウガ (myōga, jengibre japonés)',
+  リャ: 'リャマ (ryama, llama)', リュ: 'リュックサック (ryukkusakku, mochila)', リョ: 'リョウ (Ryō, nombre)', ギャ: 'ギャラリー (gyararī, galería)', ギュ: 'ギュウギュウ (gyūgyū, muy apretado)', ギョ: 'ギョッ (gyo, sobresalto)', ジャ: 'ジャケット (jaketto, chaqueta)', ジュ: 'ジュエリー (juerī, joyería)', ジョ: 'ジョーク (jōku, chiste)', ビュ: 'ビューラー (byūrā, rizador de pestañas)', ビョ: 'ビョーク (Byōku, Björk)', ピュ: 'ピューレ (pyūre, puré)', ピョ: 'ピョコピョコ (pyokopyoko, dando saltitos)',
 };
+
+const japaneseWord = (example: string) => example.split(' (')[0].trim();
 
 const exampleFor = (entry: KanaEntry, script: 'hiragana' | 'katakana', character: string) => {
   const exampleIndex = script === 'hiragana' ? 0 : 1;
   const primary = entry.example.split(' · ')[exampleIndex];
   const alternative = kanaCharacters
     .map((candidate) => candidate.example.split(' · ')[exampleIndex])
-    .find((candidate) => candidate && candidate !== primary && candidate.split(' (')[0].includes(character));
-  return [primary, alternative || extraExamples[character]].filter(Boolean).join('|||');
+    .find((candidate) => candidate && japaneseWord(candidate) !== japaneseWord(primary) && japaneseWord(candidate).includes(character));
+  const examples = [primary, alternative, extraExamples[character]].filter((example): example is string => Boolean(example));
+  return examples.filter((example, index) => examples.findIndex((item) => japaneseWord(item) === japaneseWord(example)) === index).slice(0, 2).join('|||');
 };
 
 const uniqueReadings = [...new Set(kanaCharacters.map((entry) => entry.reading))];
