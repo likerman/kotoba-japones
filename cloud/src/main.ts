@@ -215,7 +215,7 @@ function checkAnswer() {
   const feedback = document.querySelector('#feedback')!;
   feedback.className = `feedback ${correct ? 'good' : 'bad'}`;
   const answerReading = kanaReadingFor(question.answer);
-  feedback.innerHTML = `<strong>${correct ? '¡Muy bien! よくできました' : `La respuesta es “${question.answer}”${answerReading ? ` (${answerReading})` : ''}.`}${sessionMode === 'competition' ? ` <span class="point-change ${correct ? 'positive' : 'negative'}">${correct ? '+10' : '−5'} puntos</span>` : ''}</strong><p>${question.note}</p>`;
+  feedback.innerHTML = `<strong>${correct ? '¡Muy bien! よくできました' : `La respuesta es “${question.answer}”${answerReading ? ` (${answerReading})` : ''}.`}${sessionMode === 'competition' ? ` <span class="point-change ${correct ? 'positive' : 'negative'}">${correct ? '+10' : '−5'} puntos</span>` : ''}</strong><p>${question.note}</p>${question.example ? `<div class="example-word"><span>PALABRA PARA ASOCIAR</span><b>${question.example}</b></div>` : ''}`;
   const liveScore = document.querySelector<HTMLElement>('#liveScore');
   if (liveScore && sessionMode === 'competition') liveScore.textContent = `${sessionScore >= 0 ? '+' : ''}${sessionScore} puntos`;
   document.querySelector('#checkBtn')!.classList.add('hidden');

@@ -35,6 +35,32 @@
   background: color-mix(in srgb, var(--coral) 12%, transparent);
 }
 
+.example-word {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.feedback.good,
+.feedback.bad {
+  max-height: 280px;
+}
+
+.example-word span {
+  color: var(--coral);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+
+.example-word b {
+  color: var(--ink);
+  font: 600 14px/1.5 'Noto Sans JP', sans-serif;
+}
+
 .answer {
   display: flex;
   align-items: center;

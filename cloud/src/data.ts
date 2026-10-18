@@ -9,6 +9,7 @@ export type Question = {
   hint?: string;
   reading?: string;
   readingDisplay?: 'always' | 'reveal';
+  example?: string;
 };
 
 export type Module = {
@@ -49,7 +50,7 @@ const kanaReadings: Record<string, string> = {
 
 export const kanaReadingFor = (text: string) => kanaReadings[text] || '';
 
-const q = (topic: string, display: string, answer: string, choices: string[], note: string, prompt = 'Elegí la opción correcta.', reading?: string, readingDisplay: 'always' | 'reveal' = 'always'): Question => ({
+const q = (topic: string, display: string, answer: string, choices: string[], note: string, prompt = 'Elegí la opción correcta.', reading?: string, readingDisplay: 'always' | 'reveal' = 'always', example?: string): Question => ({
   topic,
   kind: topic,
   prompt,
@@ -59,28 +60,90 @@ const q = (topic: string, display: string, answer: string, choices: string[], no
   note,
   reading: reading || kanaReadingFor(display) || undefined,
   readingDisplay,
+  example,
 });
 
-const kanaCharacters = [
-  ['あ', 'ア', 'a'], ['い', 'イ', 'i'], ['う', 'ウ', 'u'], ['え', 'エ', 'e'], ['お', 'オ', 'o'],
-  ['か', 'カ', 'ka'], ['き', 'キ', 'ki'], ['く', 'ク', 'ku'], ['け', 'ケ', 'ke'], ['こ', 'コ', 'ko'],
-  ['さ', 'サ', 'sa'], ['し', 'シ', 'shi'], ['す', 'ス', 'su'], ['せ', 'セ', 'se'], ['そ', 'ソ', 'so'],
-  ['た', 'タ', 'ta'], ['ち', 'チ', 'chi'], ['つ', 'ツ', 'tsu'], ['て', 'テ', 'te'], ['と', 'ト', 'to'],
-  ['な', 'ナ', 'na'], ['に', 'ニ', 'ni'], ['ぬ', 'ヌ', 'nu'], ['ね', 'ネ', 'ne'], ['の', 'ノ', 'no'],
-  ['は', 'ハ', 'ha'], ['ひ', 'ヒ', 'hi'], ['ふ', 'フ', 'fu'], ['へ', 'ヘ', 'he'], ['ほ', 'ホ', 'ho'],
-  ['ま', 'マ', 'ma'], ['み', 'ミ', 'mi'], ['む', 'ム', 'mu'], ['め', 'メ', 'me'], ['も', 'モ', 'mo'],
-  ['や', 'ヤ', 'ya'], ['ゆ', 'ユ', 'yu'], ['よ', 'ヨ', 'yo'],
-  ['ら', 'ラ', 'ra'], ['り', 'リ', 'ri'], ['る', 'ル', 'ru'], ['れ', 'レ', 're'], ['ろ', 'ロ', 'ro'],
-  ['わ', 'ワ', 'wa'], ['を', 'ヲ', 'wo'], ['ん', 'ン', 'n'],
+type KanaEntry = { hiragana?: string; katakana?: string; reading: string; example: string };
+
+const basicKana = [
+  ['あ', 'ア', 'a', 'あめ (ame, lluvia) · アイス (aisu, helado)'], ['い', 'イ', 'i', 'いぬ (inu, perro) · イタリア (Itaria, Italia)'],
+  ['う', 'ウ', 'u', 'うみ (umi, mar) · ウール (ūru, lana)'], ['え', 'エ', 'e', 'えき (eki, estación) · エレベーター (erebētā, ascensor)'],
+  ['お', 'オ', 'o', 'おちゃ (ocha, té) · オレンジ (orenji, naranja)'], ['か', 'カ', 'ka', 'かさ (kasa, paraguas) · カメラ (kamera, cámara)'],
+  ['き', 'キ', 'ki', 'き (ki, árbol) · キウイ (kiui, kiwi)'], ['く', 'ク', 'ku', 'くるま (kuruma, auto) · クラス (kurasu, clase)'],
+  ['け', 'ケ', 'ke', 'けさ (kesa, esta mañana) · ケーキ (kēki, torta)'], ['こ', 'コ', 'ko', 'こえ (koe, voz) · コーヒー (kōhī, café)'],
+  ['さ', 'サ', 'sa', 'さかな (sakana, pescado) · サラダ (sarada, ensalada)'], ['し', 'シ', 'shi', 'しお (shio, sal) · シャツ (shatsu, camisa)'],
+  ['す', 'ス', 'su', 'すし (sushi) · スープ (sūpu, sopa)'], ['せ', 'セ', 'se', 'せかい (sekai, mundo) · セーター (sētā, suéter)'],
+  ['そ', 'ソ', 'so', 'そら (sora, cielo) · ソファ (sofa, sofá)'], ['た', 'タ', 'ta', 'たまご (tamago, huevo) · タクシー (takushī, taxi)'],
+  ['ち', 'チ', 'chi', 'ちず (chizu, mapa) · チーズ (chīzu, queso)'], ['つ', 'ツ', 'tsu', 'つき (tsuki, luna) · ツアー (tsuā, tour)'],
+  ['て', 'テ', 'te', 'て (te, mano) · テレビ (terebi, televisión)'], ['と', 'ト', 'to', 'とけい (tokei, reloj) · トマト (tomato)'],
+  ['な', 'ナ', 'na', 'なつ (natsu, verano) · ナイフ (naifu, cuchillo)'], ['に', 'ニ', 'ni', 'にく (niku, carne) · ニュース (nyūsu, noticias)'],
+  ['ぬ', 'ヌ', 'nu', 'ぬの (nuno, tela) · ヌードル (nūdoru, fideos)'], ['ね', 'ネ', 'ne', 'ねこ (neko, gato) · ネクタイ (nekutai, corbata)'],
+  ['の', 'ノ', 'no', 'のみもの (nomimono, bebida) · ノート (nōto, cuaderno)'], ['は', 'ハ', 'ha', 'はな (hana, flor) · ハンバーガー (hanbāgā, hamburguesa)'],
+  ['ひ', 'ヒ', 'hi', 'ひと (hito, persona) · ヒント (hinto, pista)'], ['ふ', 'フ', 'fu', 'ふね (fune, barco) · フォーク (fōku, tenedor)'],
+  ['へ', 'ヘ', 'he', 'へや (heya, habitación) · ヘリコプター (herikoputā, helicóptero)'], ['ほ', 'ホ', 'ho', 'ほん (hon, libro) · ホテル (hoteru)'],
+  ['ま', 'マ', 'ma', 'まど (mado, ventana) · マンガ (manga)'], ['み', 'ミ', 'mi', 'みず (mizu, agua) · ミルク (miruku, leche)'],
+  ['む', 'ム', 'mu', 'むし (mushi, insecto) · ムード (mūdo, ambiente)'], ['め', 'メ', 'me', 'め (me, ojo) · メニュー (menyū, menú)'],
+  ['も', 'モ', 'mo', 'もり (mori, bosque) · モデル (moderu, modelo)'], ['や', 'ヤ', 'ya', 'やま (yama, montaña) · ヤクルト (Yakuruto)'],
+  ['ゆ', 'ユ', 'yu', 'ゆき (yuki, nieve) · ユニフォーム (yunifōmu, uniforme)'], ['よ', 'ヨ', 'yo', 'よる (yoru, noche) · ヨーグルト (yōguruto, yogur)'],
+  ['ら', 'ラ', 'ra', 'らいねん (rainen, año próximo) · ラジオ (rajio, radio)'], ['り', 'リ', 'ri', 'りんご (ringo, manzana) · リモコン (rimokon, control remoto)'],
+  ['る', 'ル', 'ru', 'くるま (kuruma, auto) · ルール (rūru, regla)'], ['れ', 'レ', 're', 'れきし (rekishi, historia) · レストラン (resutoran)'],
+  ['ろ', 'ロ', 'ro', 'ろく (roku, seis) · ロボット (robotto, robot)'], ['わ', 'ワ', 'wa', 'わたし (watashi, yo) · ワイン (wain, vino)'],
+  ['を', 'ヲ', 'wo', 'みずをのむ (mizu o nomu, beber agua) · ヲタク (wotaku)'], ['ん', 'ン', 'n', 'ほん (hon, libro) · パン (pan, pan)'],
 ] as const;
 
-const characterQuestions = kanaCharacters.flatMap(([hiragana, katakana, romaji], index) => {
-  const distractors = [1, 2, 4].map((offset) => kanaCharacters[(index + offset) % kanaCharacters.length][2]);
-  const choices = [romaji, ...distractors];
-  return [
-    q('Lectura de hiragana', hiragana, romaji, choices, `${hiragana} se lee ${romaji}.`, '¿Cómo se lee este hiragana?', romaji, 'reveal'),
-    q('Lectura de katakana', katakana, romaji, choices, `${katakana} se lee ${romaji}.`, '¿Cómo se lee este katakana?', romaji, 'reveal'),
-  ];
+const voicedAndCombinedKana = [
+  ['が', 'ガ', 'ga', 'がくせい (gakusei, estudiante) · ガラス (garasu, vidrio)'], ['ぎ', 'ギ', 'gi', 'ぎんこう (ginkō, banco) · ギター (gitā, guitarra)'],
+  ['ぐ', 'グ', 'gu', 'ぐんて (gunte, guante) · グラス (gurasu, vaso)'], ['げ', 'ゲ', 'ge', 'げんき (genki, saludable) · ゲーム (gēmu, juego)'],
+  ['ご', 'ゴ', 'go', 'ごはん (gohan, comida) · ゴルフ (gorufu)'], ['ざ', 'ザ', 'za', 'ざっし (zasshi, revista) · ザクロ (zakuro, granada)'],
+  ['じ', 'ジ', 'ji', 'じしょ (jisho, diccionario) · ジュース (jūsu, jugo)'], ['ず', 'ズ', 'zu', 'みず (mizu, agua) · ズボン (zubon, pantalón)'],
+  ['ぜ', 'ゼ', 'ze', 'ぜんぶ (zenbu, todo) · ゼロ (zero)'], ['ぞ', 'ゾ', 'zo', 'ぞう (zō, elefante) · ゾウ (zō)'],
+  ['だ', 'ダ', 'da', 'だれ (dare, quién) · ダンス (dansu, baile)'], ['ぢ', 'ヂ', 'ji', 'ちぢむ (chijimu, encogerse) · ヂ se usa muy poco'],
+  ['づ', 'ヅ', 'zu', 'つづく (tsuzuku, continuar) · ヅ se usa muy poco'], ['で', 'デ', 'de', 'でんわ (denwa, teléfono) · デパート (depāto, tienda)'],
+  ['ど', 'ド', 'do', 'どこ (doko, dónde) · ドア (doa, puerta)'], ['ば', 'バ', 'ba', 'ばんごう (bangō, número) · バス (basu, autobús)'],
+  ['び', 'ビ', 'bi', 'びょういん (byōin, hospital) · ビール (bīru, cerveza)'], ['ぶ', 'ブ', 'bu', 'ぶた (buta, cerdo) · ブラジル (Burajiru, Brasil)'],
+  ['べ', 'ベ', 'be', 'べんり (benri, práctico) · ベッド (beddo, cama)'], ['ぼ', 'ボ', 'bo', 'ぼうし (bōshi, sombrero) · ボール (bōru, pelota)'],
+  ['ぱ', 'パ', 'pa', 'ぱん (pan, pan) · パン (pan)'], ['ぴ', 'ピ', 'pi', 'ぴかぴか (pikapika, brillante) · ピアノ (piano)'],
+  ['ぷ', 'プ', 'pu', 'ぷりぷり (puripuri, enfadado) · プール (pūru, piscina)'], ['ぺ', 'ペ', 'pe', 'ぺらぺら (perapera, con fluidez) · ペン (pen)'],
+  ['ぽ', 'ポ', 'po', 'ぽかぽか (pokapoka, tibio) · ポスト (posuto, buzón)'], ['ゔ', 'ヴ', 'vu', 'ゔ se usa raramente · ヴァイオリン (vaiorin, violín)'],
+  ['きゃ', 'キャ', 'kya', 'きゃく (kyaku, cliente) · キャベツ (kyabetsu, repollo)'], ['きゅ', 'キュ', 'kyu', 'きゅう (kyū, nueve) · キューバ (Kyūba, Cuba)'],
+  ['きょ', 'キョ', 'kyo', 'きょう (kyō, hoy) · キョウト (Kyoto)'], ['しゃ', 'シャ', 'sha', 'しゃしん (shashin, foto) · シャツ (shatsu, camisa)'],
+  ['しゅ', 'シュ', 'shu', 'しゅくだい (shukudai, tarea) · シューズ (shūzu, zapatos)'], ['しょ', 'ショ', 'sho', 'しょうゆ (shōyu, salsa de soja) · ショップ (shoppu, tienda)'],
+  ['ちゃ', 'チャ', 'cha', 'ちゃ (cha, té) · チャンス (chansu, oportunidad)'], ['ちゅ', 'チュ', 'chu', 'ちゅうごく (Chūgoku, China) · チューブ (chūbu, tubo)'],
+  ['ちょ', 'チョ', 'cho', 'ちょっと (chotto, un poco) · チョコ (choko, chocolate)'], ['にゃ', 'ニャ', 'nya', 'にゃんこ (nyanko, gatito) · ニャー (nyā, miau)'],
+  ['にゅ', 'ニュ', 'nyu', 'にゅうがく (nyūgaku, ingreso escolar) · ニュース (nyūsu, noticias)'], ['にょ', 'ニョ', 'nyo', 'にょろにょろ (nyoronyoro, serpenteando) · ニョッキ (nyokki, ñoquis)'],
+  ['ひゃ', 'ヒャ', 'hya', 'ひゃく (hyaku, cien) · ヒャッホー (hyahhō, exclamación)'], ['ひゅ', 'ヒュ', 'hyu', 'ひゅうひゅう (hyūhyū, silbido) · ヒューストン (Hyūsuton, Houston)'],
+  ['ひょ', 'ヒョ', 'hyo', 'ひょう (hyō, leopardo) · ヒョウ (hyō)'], ['みゃ', 'ミャ', 'mya', 'みゃく (myaku, pulso) · ミャンマー (Myanmā)'],
+  ['みゅ', 'ミュ', 'myu', 'みゅう (myū, maullido) · ミュージック (myūjikku, música)'], ['みょ', 'ミョ', 'myo', 'みょうじ (myōji, apellido) · ミョウガ (myōga, jengibre japonés)'],
+  ['りゃ', 'リャ', 'rya', 'りゃく (ryaku, abreviación) · リャマ (ryama, llama)'], ['りゅ', 'リュ', 'ryu', 'りゅう (ryū, dragón) · リュック (ryukku, mochila)'],
+  ['りょ', 'リョ', 'ryo', 'りょうり (ryōri, cocina) · リョウ (Ryō, nombre)'], ['ぎゃ', 'ギャ', 'gya', 'ぎゃく (gyaku, opuesto) · ギャグ (gyagu, chiste)'],
+  ['ぎゅ', 'ギュ', 'gyu', 'ぎゅうにゅう (gyūnyū, leche) · ギュッ (gyu, apretar)'], ['ぎょ', 'ギョ', 'gyo', 'ぎょう (gyō, línea) · ギョーザ (gyōza)'],
+  ['じゃ', 'ジャ', 'ja', 'じゃま (jama, molestia) · ジャム (jamu, mermelada)'], ['じゅ', 'ジュ', 'ju', 'じゅぎょう (jugyō, clase) · ジュース (jūsu, jugo)'],
+  ['じょ', 'ジョ', 'jo', 'じょうず (jōzu, hábil) · ジョギング (jogingu)'], ['びゃ', 'ビャ', 'bya', 'さんびゃく (sanbyaku, trescientos) · ビャ se usa poco'],
+  ['びゅ', 'ビュ', 'byu', 'びゅうびゅう (byūbyū, viento fuerte) · ビュッフェ (byuffe, bufé)'], ['びょ', 'ビョ', 'byo', 'びょういん (byōin, hospital) · ビョーク (Byōku, Björk)'],
+  ['ぴゃ', 'ピャ', 'pya', 'ぴゃっと (pyatto, rápidamente) · ピャ se usa poco'], ['ぴゅ', 'ピュ', 'pyu', 'ぴゅう (pyū, silbido) · ピュア (pyua, puro)'],
+  ['ぴょ', 'ピョ', 'pyo', 'ぴょんぴょん (pyonpyon, saltando) · ピョン (pyon)'],
+] as const;
+
+const specialKana: KanaEntry[] = [
+  { hiragana: 'っ', katakana: 'ッ', reading: 'consonante doble', example: 'きって (kitte, sello) · ベッド (beddo, cama)' },
+  { katakana: 'ー', reading: 'vocal larga', example: 'ケーキ (kēki, torta) · コーヒー (kōhī, café)' },
+];
+
+const kanaCharacters: KanaEntry[] = [
+  ...basicKana.map(([hiragana, katakana, reading, example]) => ({ hiragana, katakana, reading, example })),
+  ...voicedAndCombinedKana.map(([hiragana, katakana, reading, example]) => ({ hiragana, katakana, reading, example })),
+  ...specialKana,
+];
+
+const uniqueReadings = [...new Set(kanaCharacters.map((entry) => entry.reading))];
+const characterQuestions = kanaCharacters.flatMap((entry) => {
+  const readingIndex = uniqueReadings.indexOf(entry.reading);
+  const distractors = [1, 3, 7].map((offset) => uniqueReadings[(readingIndex + offset) % uniqueReadings.length]);
+  const choices = [entry.reading, ...distractors];
+  const questions: Question[] = [];
+  if (entry.hiragana) questions.push(q('Lectura de hiragana', entry.hiragana, entry.reading, choices, `${entry.hiragana} se lee ${entry.reading}.`, '¿Cómo se lee este hiragana?', entry.reading, 'reveal', entry.example));
+  if (entry.katakana) questions.push(q('Lectura de katakana', entry.katakana, entry.reading, choices, `${entry.katakana} se lee ${entry.reading}.`, '¿Cómo se lee este katakana?', entry.reading, 'reveal', entry.example));
+  return questions;
 });
 
 export const modules: Module[] = [
