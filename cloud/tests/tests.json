@@ -30,7 +30,7 @@
     "covers": ["variantes de ejercicios", "repertorio completo de kana", "hiragana", "katakana", "pista de lectura", "palabra asociada"],
     "description": "Verifica la práctica de kana básicos, sonoros, combinados y especiales con ejemplos memorables.",
     "steps": ["Abrir Lectura de caracteres", "Revelar y ocultar la lectura", "Responder y pulsar Comprobar", "Observar la palabra de ejemplo", "Repetir con hiragana, katakana, dakuten y sonidos combinados", "Encontrar っ, ッ o ー y revelar su función"],
-    "expected": "Tras comprobar se muestran la lectura y una palabra que contiene el carácter; los signos especiales se comparan visualmente y ofrecen sólo opciones de función equivalentes."
+    "expected": "Tras comprobar se muestran la lectura y una sola palabra de uso habitual escrita en el mismo silabario que el carácter; los signos especiales se comparan visualmente y ofrecen sólo opciones de función equivalentes."
   },
   {
     "name": "Exigir un perfil antes de entrenar",
