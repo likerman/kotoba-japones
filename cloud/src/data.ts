@@ -140,20 +140,41 @@ const kanaCharacters: KanaEntry[] = [
     .map(([hiragana, katakana, reading, example]) => ({ hiragana, katakana, reading, example })),
 ];
 
+const extraExamples: Record<string, string> = {
+  あ: 'あさ (asa, mañana)', す: 'すき (suki, gustar)', そ: 'そと (soto, afuera)', ふ: 'ふゆ (fuyu, invierno)', へ: 'へた (heta, poco hábil)', ほ: 'ほし (hoshi, estrella)', よ: 'よむ (yomu, leer)', を: 'ほんをよむ (hon o yomu, leer un libro)',
+  ぐ: 'ぐあい (guai, estado)', げ: 'げんかん (genkan, entrada)', ざ: 'ざせき (zaseki, asiento)', ぜ: 'ぜひ (zehi, sin falta)', ぞ: 'ぞうきん (zōkin, trapo)', で: 'でぐち (deguchi, salida)', ば: 'ばしょ (basho, lugar)', べ: 'べんとう (bentō, vianda)', ぼ: 'ぼたん (botan, botón)', ぱ: 'ぱちぱち (pachipachi, aplausos)', ぷ: 'ぷかぷか (pukapuka, flotando)', ぺ: 'ぺこぺこ (pekopeko, con hambre)', ぽ: 'ぽんぽん (ponpon, suavemente)',
+  きゃ: 'きゃくしつ (kyakushitsu, habitación de huéspedes)', きゅ: 'きゅうけい (kyūkei, descanso)', きょ: 'きょねん (kyonen, año pasado)', しゃ: 'しゃかい (shakai, sociedad)', しゅ: 'しゅみ (shumi, pasatiempo)', ちゅ: 'ちゅうい (chūi, atención)', ちょ: 'ちょうど (chōdo, justo)', にゃ: 'にゃんにゃん (nyannyan, miau)', にょ: 'にょきにょき (nyokinyoki, brotando)',
+  ひゃ: 'ひゃくえん (hyakuen, cien yenes)', ひゅ: 'ひゅっと (hyutto, rápidamente)', ひょ: 'ひょうか (hyōka, evaluación)', みゃ: 'みゃくはく (myakuhaku, pulso)', みゅ: 'みゅうみゅう (myūmyū, maullido)', みょ: 'みょうにち (myōnichi, mañana)', りゃ: 'りゃくご (ryakugo, abreviatura)', りゅ: 'りゅうがく (ryūgaku, estudiar en el extranjero)', りょ: 'りょこう (ryokō, viaje)',
+  ぎゃ: 'ぎゃくてん (gyakuten, remontada)', ぎゅ: 'ぎゅうどん (gyūdon, arroz con carne)', じゃ: 'じゃぐち (jaguchi, canilla)', じゅ: 'じゅうしょ (jūsho, dirección)', じょ: 'じょせい (josei, mujer)', びゅ: 'びゅうびゅう (byūbyū, viento fuerte)', びょ: 'びょうき (byōki, enfermedad)', ぴゅ: 'ぴゅっと (pyutto, de golpe)', ぴょ: 'ぴょこぴょこ (pyokopyoko, dando saltitos)',
+  エ: 'エアコン (eakon, aire acondicionado)', カ: 'カレー (karē, curry)', ケ: 'ケチャップ (kechappu, kétchup)', サ: 'サンドイッチ (sandoicchi, sándwich)', セ: 'センター (sentā, centro)', ソ: 'ソース (sōsu, salsa)', ナ: 'ナンバー (nanbā, número)', ヌ: 'カヌー (kanū, canoa)', ネ: 'ネット (netto, internet)', ハ: 'ハム (hamu, jamón)', ヘ: 'ヘルメット (herumetto, casco)', ヤ: 'タイヤ (taiya, neumático)', ユ: 'ユーモア (yūmoa, humor)', ヨ: 'ヨガ (yoga)', ワ: 'シャワー (shawā, ducha)',
+  ゲ: 'ゲスト (gesuto, invitado)', ゴ: 'ゴール (gōru, meta)', ゼ: 'ゼリー (zerī, gelatina)', ゾ: 'ゾンビ (zonbi, zombi)', ペ: 'ページ (pēji, página)', ポ: 'ポケット (poketto, bolsillo)',
+  キャ: 'キャンプ (kyanpu, campamento)', キュ: 'キュート (kyūto, adorable)', キョ: 'キョロキョロ (kyorokyoro, mirar alrededor)', シャ: 'シャワー (shawā, ducha)', シュ: 'シュート (shūto, tiro)', ショ: 'ショー (shō, espectáculo)', チャ: 'チャレンジ (charenji, desafío)', チュ: 'チューリップ (chūrippu, tulipán)', チョ: 'チョコレート (chokorēto, chocolate)',
+  ニャ: 'ニャンコ (nyanko, gatito)', ニョ: 'ニョロニョロ (nyoronyoro, serpenteando)', ヒャ: 'ヒャッホー (hyahhō, exclamación)', ヒュ: 'ヒューマン (hyūman, humano)', ヒョ: 'ヒョウ (hyō, leopardo)', ミャ: 'ミャンマー (Myanmā, Myanmar)', ミュ: 'ミュージカル (myūjikaru, musical)', ミョ: 'ミョウガ (myōga, jengibre japonés)',
+  リャ: 'リャマ (ryama, llama)', リュ: 'リュックサック (ryukkusakku, mochila)', リョ: 'リョウ (Ryō, nombre)', ギャ: 'ギャラリー (gyararī, galería)', ギュ: 'ギュッ (gyu, apretar)', ギョ: 'ギョーザ (gyōza, empanadilla)', ジャ: 'ジャケット (jaketto, chaqueta)', ジュ: 'ジュエリー (juerī, joyería)', ジョ: 'ジョーク (jōku, chiste)', ビュ: 'ビューラー (byūrā, rizador de pestañas)', ビョ: 'ビョーク (Byōku, Björk)', ピュ: 'ピュア (pyua, puro)', ピョ: 'ピョン (pyon, salto)',
+};
+
+const exampleFor = (entry: KanaEntry, script: 'hiragana' | 'katakana', character: string) => {
+  const exampleIndex = script === 'hiragana' ? 0 : 1;
+  const primary = entry.example.split(' · ')[exampleIndex];
+  const alternative = kanaCharacters
+    .map((candidate) => candidate.example.split(' · ')[exampleIndex])
+    .find((candidate) => candidate && candidate !== primary && candidate.split(' (')[0].includes(character));
+  return [primary, alternative || extraExamples[character]].filter(Boolean).join('|||');
+};
+
 const uniqueReadings = [...new Set(kanaCharacters.map((entry) => entry.reading))];
 const characterQuestions = kanaCharacters.flatMap((entry) => {
   const readingIndex = uniqueReadings.indexOf(entry.reading);
   const distractors = [1, 3, 7].map((offset) => uniqueReadings[(readingIndex + offset) % uniqueReadings.length]);
   const choices = [entry.reading, ...distractors];
-  const [hiraganaExample, katakanaExample] = entry.example.split(' · ');
   const questions: Question[] = [];
-  if (entry.hiragana) questions.push(q('Lectura de hiragana', entry.hiragana, entry.reading, choices, `${entry.hiragana} se lee ${entry.reading}.`, '¿Cómo se lee este hiragana?', entry.reading, 'reveal', hiraganaExample));
-  if (entry.katakana) questions.push(q('Lectura de katakana', entry.katakana, entry.reading, choices, `${entry.katakana} se lee ${entry.reading}.`, '¿Cómo se lee este katakana?', entry.reading, 'reveal', katakanaExample));
+  if (entry.hiragana) questions.push(q('Lectura de hiragana', entry.hiragana, entry.reading, choices, `${entry.hiragana} se lee ${entry.reading}.`, '¿Cómo se lee este hiragana?', entry.reading, 'reveal', exampleFor(entry, 'hiragana', entry.hiragana)));
+  if (entry.katakana) questions.push(q('Lectura de katakana', entry.katakana, entry.reading, choices, `${entry.katakana} se lee ${entry.reading}.`, '¿Cómo se lee este katakana?', entry.reading, 'reveal', exampleFor(entry, 'katakana', entry.katakana)));
   return questions;
 }).concat([
-  q('Signo especial de hiragana', 'っ　⇄　つ', 'duplica la consonante siguiente', ['duplica la consonante siguiente', 'alarga la vocal anterior', 'representa el sonido n', 'marca el objeto directo'], 'っ es una “tsu” pequeña. No se pronuncia sola: indica que la consonante que sigue se duplica.', '¿Qué función cumple el primer signo, っ pequeño?', 'tsu pequeña → consonante doble', 'reveal', 'きって (kitte, sello)', 'función'),
-  q('Signo especial de katakana', 'ッ　⇄　ツ', 'duplica la consonante siguiente', ['duplica la consonante siguiente', 'alarga la vocal anterior', 'representa el sonido n', 'marca el objeto directo'], 'ッ es una “tsu” pequeña. No se pronuncia sola: indica que la consonante que sigue se duplica.', '¿Qué función cumple el primer signo, ッ pequeño?', 'tsu pequeña → consonante doble', 'reveal', 'ベッド (beddo, cama)', 'función'),
-  q('Signo especial de katakana', 'ー', 'alarga la vocal anterior', ['alarga la vocal anterior', 'duplica la consonante siguiente', 'representa el sonido n', 'marca el objeto directo'], 'ー es la marca de vocal larga: extiende el sonido de la vocal anterior en palabras escritas en katakana.', '¿Qué función cumple esta marca en katakana?', 'marca de vocal larga', 'reveal', 'ケーキ (kēki, torta)', 'función'),
+  q('Signo especial de hiragana', 'っ　⇄　つ', 'duplica la consonante siguiente', ['duplica la consonante siguiente', 'alarga la vocal anterior', 'representa el sonido n', 'marca el objeto directo'], 'っ es una “tsu” pequeña. No se pronuncia sola: indica que la consonante que sigue se duplica.', '¿Qué función cumple el primer signo, っ pequeño?', 'tsu pequeña → consonante doble', 'reveal', 'きって (kitte, sello)|||ざっし (zasshi, revista)', 'función'),
+  q('Signo especial de katakana', 'ッ　⇄　ツ', 'duplica la consonante siguiente', ['duplica la consonante siguiente', 'alarga la vocal anterior', 'representa el sonido n', 'marca el objeto directo'], 'ッ es una “tsu” pequeña. No se pronuncia sola: indica que la consonante que sigue se duplica.', '¿Qué función cumple el primer signo, ッ pequeño?', 'tsu pequeña → consonante doble', 'reveal', 'ベッド (beddo, cama)|||ワット (watto, watt)', 'función'),
+  q('Signo especial de katakana', 'ー', 'alarga la vocal anterior', ['alarga la vocal anterior', 'duplica la consonante siguiente', 'representa el sonido n', 'marca el objeto directo'], 'ー es la marca de vocal larga: extiende el sonido de la vocal anterior en palabras escritas en katakana.', '¿Qué función cumple esta marca en katakana?', 'marca de vocal larga', 'reveal', 'ケーキ (kēki, torta)|||コーヒー (kōhī, café)', 'función'),
 ]);
 
 export const modules: Module[] = [
