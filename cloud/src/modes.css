@@ -263,6 +263,28 @@
   cursor: not-allowed;
 }
 
+.path-card.word-level {
+  border-color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 6%, var(--white));
+}
+
+.path-actions {
+  width: 205px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.path-actions button {
+  padding: 10px 8px;
+  font-size: 11px;
+}
+
+.word-display {
+  font-size: clamp(38px, 7vw, 62px);
+  letter-spacing: .06em;
+}
+
 .typing-answer {
   max-width: 460px;
   margin: 0 auto;
@@ -350,5 +372,14 @@
   .path-card button {
     grid-column: 1 / -1;
     width: 100%;
+  }
+
+  .path-actions {
+    width: 100%;
+    grid-column: 1 / -1;
+  }
+
+  .path-actions button {
+    grid-column: auto;
   }
 }

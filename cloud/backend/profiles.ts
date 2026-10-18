@@ -2,6 +2,7 @@ import { db, json, error, type RouterRoutes } from '@appdeploy/sdk';
 
 type TopicStats = Record<string, { correct: number; total: number }>;
 type CharacterStats = Record<string, { correct: number; total: number; reading: string; script: 'hiragana' | 'katakana' }>;
+type WordStats = Record<string, { correct: number; total: number; reading: string; meaning: string; script: 'hiragana' | 'katakana' }>;
 type Profile = {
   slug: 'aime' | 'jere';
   name: string;
@@ -15,6 +16,7 @@ type Profile = {
   perfectSessions: number;
   topicStats: TopicStats;
   characterStats?: CharacterStats;
+  wordStats?: WordStats;
   lastPlayed: number | null;
 };
 
@@ -34,7 +36,7 @@ async function listProfiles() {
     ({ items } = await db.list<Profile>(TABLE, { limit: 10 }));
   }
   return items
-    .map((profile) => ({ ...profile, trainingSessions: profile.trainingSessions || 0, competitionSessions: profile.competitionSessions || 0, characterStats: profile.characterStats || {} }))
+    .map((profile) => ({ ...profile, trainingSessions: profile.trainingSessions || 0, competitionSessions: profile.competitionSessions || 0, characterStats: profile.characterStats || {}, wordStats: profile.wordStats || {} }))
     .sort((a, b) => a.slug.localeCompare(b.slug));
 }
 
@@ -49,6 +51,7 @@ export const profileRoutes: RouterRoutes = {
       total?: number;
       topics?: TopicStats;
       characters?: CharacterStats;
+      words?: WordStats;
       mode?: 'training' | 'competition';
     };
 
@@ -88,6 +91,15 @@ export const profileRoutes: RouterRoutes = {
       const previous = characterStats[character] || { correct: 0, total: 0, reading: result.reading, script: result.script };
       characterStats[character] = { correct: previous.correct + characterCorrect, total: previous.total + characterTotal, reading: result.reading, script: result.script };
     }
+    const wordStats: WordStats = { ...(current.wordStats || {}) };
+    for (const [word, result] of Object.entries(payload.words || {}).slice(0, 10)) {
+      const wordCorrect = Number(result.correct);
+      const wordTotal = Number(result.total);
+      if (!word || word.length > 20 || !Number.isInteger(wordCorrect) || !Number.isInteger(wordTotal) || wordTotal < 0 || wordCorrect < 0 || wordCorrect > wordTotal) continue;
+      if (result.script !== 'hiragana' && result.script !== 'katakana') continue;
+      const previous = wordStats[word] || { correct: 0, total: 0, reading: result.reading, meaning: result.meaning, script: result.script };
+      wordStats[word] = { correct: previous.correct + wordCorrect, total: previous.total + wordTotal, reading: result.reading, meaning: result.meaning, script: result.script };
+    }
     const updated: Profile = {
       slug: current.slug,
       name: current.name,
@@ -101,6 +113,7 @@ export const profileRoutes: RouterRoutes = {
       perfectSessions: current.perfectSessions + (perfect ? 1 : 0),
       topicStats,
       characterStats,
+      wordStats,
       lastPlayed: Date.now(),
     };
 

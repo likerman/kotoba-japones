@@ -14,6 +14,10 @@ export type Question = {
   character?: string;
   script?: 'hiragana' | 'katakana';
   group?: string;
+  word?: string;
+  wordReading?: string;
+  segments?: string;
+  meaning?: string;
 };
 
 export type Module = {
@@ -260,6 +264,53 @@ export const similarCharacterQuestions = similarCharacterSets.flatMap((set) => s
 
 export const characterPracticeQuestions = characterQuestions.filter((question) => question.character);
 export const characterGroups = [...new Set(characterPracticeQuestions.map((question) => question.group).filter((group): group is string => Boolean(group)))];
+
+const wordEntries = [
+  ['しゃしん', 'しゃ・し・ん', 'shashin', 'foto', 'hiragana'], ['じしょ', 'じ・しょ', 'jisho', 'diccionario', 'hiragana'],
+  ['がくせい', 'が・く・せ・い', 'gakusei', 'estudiante', 'hiragana'], ['せんせい', 'せ・ん・せ・い', 'sensei', 'profesor', 'hiragana'],
+  ['かいしゃ', 'か・い・しゃ', 'kaisha', 'empresa', 'hiragana'], ['ぎんこう', 'ぎ・ん・こ・う', 'ginkou', 'banco', 'hiragana'],
+  ['いしゃ', 'い・しゃ', 'isha', 'médico', 'hiragana'], ['かさ', 'か・さ', 'kasa', 'paraguas', 'hiragana'],
+  ['とけい', 'と・け・い', 'tokei', 'reloj', 'hiragana'], ['ほん', 'ほ・ん', 'hon', 'libro', 'hiragana'],
+  ['くるま', 'く・る・ま', 'kuruma', 'auto', 'hiragana'], ['でんしゃ', 'で・ん・しゃ', 'densha', 'tren', 'hiragana'],
+  ['ちかてつ', 'ち・か・て・つ', 'chikatetsu', 'subte', 'hiragana'], ['ともだち', 'と・も・だ・ち', 'tomodachi', 'amigo', 'hiragana'],
+  ['かぞく', 'か・ぞ・く', 'kazoku', 'familia', 'hiragana'], ['ごはん', 'ご・は・ん', 'gohan', 'comida', 'hiragana'],
+  ['みず', 'み・ず', 'mizu', 'agua', 'hiragana'], ['おちゃ', 'お・ちゃ', 'ocha', 'té', 'hiragana'],
+  ['やさい', 'や・さ・い', 'yasai', 'verduras', 'hiragana'], ['くだもの', 'く・だ・も・の', 'kudamono', 'fruta', 'hiragana'],
+  ['りょうり', 'りょ・う・り', 'ryouri', 'cocina', 'hiragana'], ['びょういん', 'びょ・う・い・ん', 'byouin', 'hospital', 'hiragana'],
+  ['ゆうびんきょく', 'ゆ・う・び・ん・きょ・く', 'yuubinkyoku', 'correo', 'hiragana'], ['きょうしつ', 'きょ・う・し・つ', 'kyoushitsu', 'aula', 'hiragana'],
+  ['カメラ', 'カ・メ・ラ', 'kamera', 'cámara', 'katakana'], ['テレビ', 'テ・レ・ビ', 'terebi', 'televisión', 'katakana'],
+  ['ラジオ', 'ラ・ジ・オ', 'rajio', 'radio', 'katakana'], ['バス', 'バ・ス', 'basu', 'autobús', 'katakana'],
+  ['タクシー', 'タ・ク・シー', 'takushii', 'taxi', 'katakana'], ['ホテル', 'ホ・テ・ル', 'hoteru', 'hotel', 'katakana'],
+  ['レストラン', 'レ・ス・ト・ラ・ン', 'resutoran', 'restaurante', 'katakana'], ['スーパー', 'スー・パー', 'suupaa', 'supermercado', 'katakana'],
+  ['コンピューター', 'コ・ン・ピュー・ター', 'konpyuutaa', 'computadora', 'katakana'], ['ジュース', 'ジュー・ス', 'juusu', 'jugo', 'katakana'],
+  ['コーヒー', 'コー・ヒー', 'koohii', 'café', 'katakana'], ['パン', 'パ・ン', 'pan', 'pan', 'katakana'],
+  ['ノート', 'ノー・ト', 'nooto', 'cuaderno', 'katakana'], ['ペン', 'ペ・ン', 'pen', 'lapicera', 'katakana'],
+  ['シャツ', 'シャ・ツ', 'shatsu', 'camisa', 'katakana'],
+] as const;
+
+const wordReadings = wordEntries.map(([, , reading]) => reading);
+const wordMeanings = wordEntries.map(([, , , meaning]) => meaning);
+export const wordPracticeQuestions: Question[] = wordEntries.map(([word, segments, reading, meaning, script], index) => ({
+  topic: 'Lectura de palabras',
+  kind: 'Nivel 3',
+  prompt: '¿Cómo se lee esta palabra?',
+  display: word,
+  answer: reading,
+  choices: [reading, wordReadings[(index + 5) % wordReadings.length], wordReadings[(index + 11) % wordReadings.length], wordReadings[(index + 17) % wordReadings.length]],
+  note: `${word} se lee ${reading} y significa “${meaning}”.`,
+  reading: segments,
+  readingDisplay: 'always',
+  word,
+  wordReading: reading,
+  segments,
+  meaning,
+  script,
+}));
+
+export const meaningChoicesFor = (question: Question) => {
+  const index = wordPracticeQuestions.findIndex((item) => item.word === question.word);
+  return [question.meaning!, wordMeanings[(index + 7) % wordMeanings.length], wordMeanings[(index + 13) % wordMeanings.length], wordMeanings[(index + 19) % wordMeanings.length]];
+};
 
 export const modules: Module[] = [
   {

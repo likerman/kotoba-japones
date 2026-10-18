@@ -2,10 +2,11 @@ import { api } from '@appdeploy/client';
 import './styles.css';
 import './kana.css';
 import './modes.css';
-import { buildQuestionPool, characterGroups, characterPracticeQuestions, kanaReadingFor, modules, similarCharacterQuestions, type Module, type Question } from './data';
+import { buildQuestionPool, characterGroups, characterPracticeQuestions, kanaReadingFor, meaningChoicesFor, modules, similarCharacterQuestions, wordPracticeQuestions, type Module, type Question } from './data';
 
 type TopicStats = Record<string, { correct: number; total: number }>;
 type CharacterStats = Record<string, { correct: number; total: number; reading: string; script: 'hiragana' | 'katakana' }>;
+type WordStats = Record<string, { correct: number; total: number; reading: string; meaning: string; script: 'hiragana' | 'katakana' }>;
 type Profile = {
   id?: string;
   slug: 'aime' | 'jere';
@@ -20,6 +21,7 @@ type Profile = {
   perfectSessions: number;
   topicStats: TopicStats;
   characterStats?: CharacterStats;
+  wordStats?: WordStats;
   lastPlayed: number | null;
 };
 
@@ -33,6 +35,7 @@ let selectedAnswer = '';
 let sessionCorrect = 0;
 let sessionTopics: TopicStats = {};
 let sessionCharacters: CharacterStats = {};
+let sessionWords: WordStats = {};
 let sessionMode: 'training' | 'competition' = 'training';
 let responseMode: 'choice' | 'typing' = 'choice';
 let sessionScore = 0;
@@ -128,6 +131,13 @@ function difficultCharacters(profile: Profile) {
     .map(([character, stat]) => ({ character, ...stat, accuracy: Math.round(stat.correct / stat.total * 100) }));
 }
 
+function difficultWords(profile: Profile) {
+  return Object.entries(profile.wordStats || {})
+    .filter(([, stat]) => stat.total >= 2 && stat.correct / stat.total < .8)
+    .sort(([, a], [, b]) => a.correct / a.total - b.correct / b.total)
+    .map(([word, stat]) => ({ word, ...stat, accuracy: Math.round(stat.correct / stat.total * 100) }));
+}
+
 function renderTraining() {
   if (!activeProfile || !currentUser()) return renderProfilePicker();
   const profile = currentUser()!;
@@ -159,6 +169,8 @@ function renderTraining() {
 function renderCharacterHub(script: 'both' | 'hiragana' | 'katakana' = 'both', group = 'Todos') {
   if (!activeProfile || !currentUser()) return renderProfilePicker();
   const difficult = difficultCharacters(currentUser()!);
+  const weakWords = difficultWords(currentUser()!);
+  const visibleWeakWords = weakWords.filter((item) => script === 'both' || item.script === script);
   const available = characterPracticeQuestions.filter((question) => (script === 'both' || question.script === script) && (group === 'Todos' || question.group === group));
   const scriptLabel = script === 'both' ? 'Ambos silabarios' : script === 'hiragana' ? 'Hiragana' : 'Katakana';
   shell(`
@@ -175,6 +187,7 @@ function renderCharacterHub(script: 'both' | 'hiragana' | 'katakana' = 'both', g
       <div class="learning-path">
         <article class="path-card featured"><span class="path-number">1</span><div><small>RECONOCIMIENTO</small><h2>${scriptLabel} · ${group}</h2><p>Ves un carácter y elegís cómo se lee. Después aparecen dos palabras para asociarlo.</p><b>${available.length} caracteres disponibles</b></div><button class="primary-btn" data-character-mode="regular" ${available.length ? '' : 'disabled'}>Empezar →</button></article>
         <article class="path-card"><span class="path-number">2</span><div><small>RECORDAR LA LECTURA</small><h2>Sin opciones</h2><p>Ves el carácter y escribís su lectura en rōmaji. Podés revelar la lectura si necesitás una pista.</p><b>Acepta vocales largas con o sin macrón</b></div><button class="primary-btn" data-character-mode="recall" ${available.length ? '' : 'disabled'}>Recordar →</button></article>
+        <article class="path-card word-level"><span class="path-number">3</span><div><small>LECTURA DE PALABRAS</small><h2>Unir los sonidos</h2><p>Pasá de caracteres aislados a vocabulario real. Elegí lectura guiada, lectura sin ayuda o comprensión.</p><b>${wordPracticeQuestions.filter((question) => script === 'both' || question.script === script).length} palabras · ${visibleWeakWords.length ? `${visibleWeakWords.length} para reforzar` : 'vocabulario del manual'}</b></div><div class="path-actions"><button class="secondary-btn" data-word-mode="guided">Con ayuda</button><button class="primary-btn" data-word-mode="recall">Sin ayuda</button><button class="secondary-btn" data-word-mode="meaning">Significado</button><button class="secondary-btn" data-word-mode="difficult" ${visibleWeakWords.length ? '' : 'disabled'}>Mis palabras</button></div></article>
         <article class="path-card"><span class="path-number">↔</span><div><small>CONTRASTES</small><h2>Caracteres parecidos</h2><p>Practicá juntos los que suelen confundirse visualmente, como シ・ツ y ソ・ン.</p></div><button class="secondary-btn" data-character-mode="similar">Practicar pares</button></article>
         <article class="path-card"><span class="path-number">◎</span><div><small>REPASO PERSONAL</small><h2>Mis dificultades</h2><p>${difficult.length ? `Tenés ${difficult.length} caracteres por reforzar: ${difficult.slice(0, 6).map((item) => item.character).join('、')}.` : 'Aparecerá cuando hayas respondido al menos dos veces un carácter y tu precisión sea menor al 80%.'}</p></div><button class="secondary-btn" data-character-mode="difficult" ${difficult.length ? '' : 'disabled'}>Repasar errores</button></article>
       </div>
@@ -183,6 +196,7 @@ function renderCharacterHub(script: 'both' | 'hiragana' | 'katakana' = 'both', g
   document.querySelectorAll<HTMLElement>('[data-script]').forEach((button) => button.onclick = () => renderCharacterHub(button.dataset.script as 'both' | 'hiragana' | 'katakana', group));
   document.querySelectorAll<HTMLElement>('[data-group]').forEach((button) => button.onclick = () => renderCharacterHub(script, button.dataset.group!));
   document.querySelectorAll<HTMLElement>('[data-character-mode]').forEach((button) => button.onclick = () => startCharacterSession(button.dataset.characterMode!, script, group));
+  document.querySelectorAll<HTMLElement>('[data-word-mode]').forEach((button) => button.onclick = () => startWordSession(button.dataset.wordMode!, script));
 }
 
 function startCharacterSession(mode: string, script: 'both' | 'hiragana' | 'katakana', group: string) {
@@ -200,7 +214,23 @@ function startCharacterSession(mode: string, script: 'both' | 'hiragana' | 'kata
   currentModule = { id: 'reading', icon: '読', title, description: '', level: 'Reconocimiento', questions: pool };
   responseMode = mode === 'recall' ? 'typing' : 'choice';
   questions = shuffle(pool).slice(0, 10).map((question) => ({ ...question, choices: shuffle(question.choices) }));
-  questionIndex = 0; sessionCorrect = 0; sessionTopics = {}; sessionCharacters = {}; sessionMode = 'training'; sessionScore = 0; review = [];
+  questionIndex = 0; sessionCorrect = 0; sessionTopics = {}; sessionCharacters = {}; sessionWords = {}; sessionMode = 'training'; sessionScore = 0; review = [];
+  renderQuestion();
+}
+
+function startWordSession(mode: string, script: 'both' | 'hiragana' | 'katakana') {
+  const difficult = new Set(difficultWords(currentUser()!).map((item) => item.word));
+  const source = wordPracticeQuestions.filter((question) => (script === 'both' || question.script === script) && (mode !== 'difficult' || difficult.has(question.word!)));
+  const pool = source.map((question) => {
+    if (mode === 'meaning') return { ...question, prompt: '¿Qué significa esta palabra?', answer: question.meaning!, choices: meaningChoicesFor(question), readingDisplay: 'reveal' as const, helpLabel: 'separación' };
+    if (mode === 'recall' || mode === 'difficult') return { ...question, prompt: 'Escribí cómo se lee esta palabra.', readingDisplay: 'reveal' as const, helpLabel: 'separación' };
+    return { ...question, prompt: 'Uní los sonidos y elegí la lectura correcta.', readingDisplay: 'always' as const };
+  });
+  const titles: Record<string, string> = { guided: 'Palabras con ayuda', recall: 'Palabras sin ayuda', meaning: 'Comprender palabras', difficult: 'Mis palabras difíciles' };
+  currentModule = { id: 'reading', icon: '読', title: titles[mode] || 'Lectura de palabras', description: '', level: 'Nivel 3', questions: pool };
+  responseMode = mode === 'recall' || mode === 'difficult' ? 'typing' : 'choice';
+  questions = shuffle(pool).slice(0, 10).map((question) => ({ ...question, choices: shuffle(question.choices) }));
+  questionIndex = 0; sessionCorrect = 0; sessionTopics = {}; sessionCharacters = {}; sessionWords = {}; sessionMode = 'training'; sessionScore = 0; review = [];
   renderQuestion();
 }
 
@@ -235,7 +265,7 @@ function startSession(moduleId: string, mode: 'training' | 'competition') {
   currentModule = module || { id: 'mix', icon: '祭', title: 'Repaso mixto', description: '', level: 'Lecciones 1–5', questions: pool };
   responseMode = 'choice';
   questions = shuffle(pool).slice(0, 10).map((question) => ({ ...question, choices: shuffle(question.choices) }));
-  questionIndex = 0; sessionCorrect = 0; sessionTopics = {}; sessionCharacters = {}; sessionMode = mode; sessionScore = 0; review = [];
+  questionIndex = 0; sessionCorrect = 0; sessionTopics = {}; sessionCharacters = {}; sessionWords = {}; sessionMode = mode; sessionScore = 0; review = [];
   renderQuestion();
 }
 
@@ -252,7 +282,7 @@ function renderQuestion() {
     : `<div class="answer-grid">${question.choices.map((choice, index) => { const reading = kanaReadingFor(choice); return `<button class="answer" data-answer="${choice.replaceAll('"', '&quot;')}"><span>${String.fromCharCode(65 + index)}</span><span class="answer-text"><b>${choice}</b>${reading ? `<small>${reading}</small>` : ''}</span></button>`; }).join('')}</div>`;
   shell(`
     <section class="practice-view"><div class="practice-head"><button class="icon-btn" data-action="exit">×</button><div><span>${questionIndex + 1} de ${questions.length}</span><div class="progress-track"><i style="width:${questionIndex / questions.length * 100}%"></i></div></div><b>${currentModule?.title}</b></div><div class="mode-banner ${sessionMode}"><span>${sessionMode === 'competition' ? 'COMPETICIÓN' : 'ENTRENAMIENTO'}</span><strong id="liveScore">${sessionMode === 'competition' ? `${sessionScore >= 0 ? '+' : ''}${sessionScore} puntos` : 'Sin puntos'}</strong></div>
-      <div class="question-shell"><div class="question-meta"><span>${question.topic}</span><span>${responseMode === 'typing' ? 'Sin opciones' : question.kind}</span></div><p class="question-prompt">${responseMode === 'typing' ? 'Escribí cómo se lee este carácter.' : question.prompt}</p><div class="question-display">${question.display}</div>${readingHelp}${answerArea}<div id="feedback" class="feedback"></div><button id="checkBtn" class="primary-btn check-btn" disabled>Comprobar</button><button id="nextBtn" class="primary-btn check-btn hidden">Continuar →</button></div>
+      <div class="question-shell"><div class="question-meta"><span>${question.topic}</span><span>${responseMode === 'typing' ? 'Sin opciones' : question.kind}</span></div><p class="question-prompt">${responseMode === 'typing' ? question.prompt : question.prompt}</p><div class="question-display ${question.word ? 'word-display' : ''}">${question.display}</div>${readingHelp}${answerArea}<div id="feedback" class="feedback"></div><button id="checkBtn" class="primary-btn check-btn" disabled>Comprobar</button><button id="nextBtn" class="primary-btn check-btn hidden">Continuar →</button></div>
     </section>
   `, sessionMode === 'competition' ? 'race' : 'train');
   document.querySelector<HTMLElement>('[data-action="exit"]')!.onclick = sessionMode === 'competition' ? renderRace : renderTraining;
@@ -279,7 +309,7 @@ function renderQuestion() {
 }
 
 function normalizedReading(value: string) {
-  return value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll('ou', 'o').replaceAll('oo', 'o').replaceAll('uu', 'u');
+  return value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll('ou', 'o').replaceAll('oo', 'o').replaceAll('uu', 'u').replaceAll('aa', 'a').replaceAll('ii', 'i').replaceAll('ee', 'e');
 }
 
 function checkAnswer() {
@@ -291,6 +321,10 @@ function checkAnswer() {
   if (question.character && question.script) {
     const characterStat = sessionCharacters[question.character] || { correct: 0, total: 0, reading: question.answer, script: question.script };
     sessionCharacters[question.character] = { ...characterStat, correct: characterStat.correct + (correct ? 1 : 0), total: characterStat.total + 1 };
+  }
+  if (question.word && question.script && question.wordReading && question.meaning) {
+    const wordStat = sessionWords[question.word] || { correct: 0, total: 0, reading: question.wordReading, meaning: question.meaning, script: question.script };
+    sessionWords[question.word] = { ...wordStat, correct: wordStat.correct + (correct ? 1 : 0), total: wordStat.total + 1 };
   }
   if (correct) sessionCorrect += 1; else review.push({ display: question.display, answer: question.answer, displayReading: question.reading || '', answerReading: kanaReadingFor(question.answer) });
   document.querySelectorAll<HTMLButtonElement>('[data-answer]').forEach((button) => { button.disabled = true; if (button.dataset.answer === question.answer) button.classList.add('correct'); else if (button.dataset.answer === selectedAnswer) button.classList.add('wrong'); });
@@ -314,7 +348,7 @@ async function finishSession() {
   const earned = sessionMode === 'competition' ? sessionScore : 0;
   let synced = true;
   try {
-    const response = await api.post('/api/sessions', { profile: activeProfile, module: currentModule?.id || 'mix', correct: sessionCorrect, total: questions.length, topics: sessionTopics, characters: sessionCharacters, mode: sessionMode });
+    const response = await api.post('/api/sessions', { profile: activeProfile, module: currentModule?.id || 'mix', correct: sessionCorrect, total: questions.length, topics: sessionTopics, characters: sessionCharacters, words: sessionWords, mode: sessionMode });
     profiles = response.data.profiles;
   } catch { synced = false; }
   shell(`<section class="results-view"><div class="results-card"><span class="result-stamp">${sessionCorrect === questions.length ? '満点' : '前進'}</span><p class="eyebrow">${sessionMode === 'competition' ? 'DESAFÍO COMPLETADO' : 'ENTRENAMIENTO COMPLETADO'}</p><h1>${sessionCorrect >= 8 ? '¡Excelente trabajo!' : sessionCorrect >= 6 ? '¡Buen avance!' : 'Cada intento enseña'}</h1><div class="result-score"><strong>${sessionCorrect}/${questions.length}</strong><span>${sessionMode === 'competition' ? `${earned >= 0 ? '+' : ''}${earned} puntos en la carrera` : 'Práctica sin puntos'}</span></div>${!synced ? '<p class="sync-error">No pudimos sincronizar esta sesión. Revisá tu conexión antes de cerrar.</p>' : ''}<div class="review-list">${review.length ? `<h3>Para repasar</h3>${review.slice(0, 4).map((item) => `<p><span>${item.display}${item.displayReading ? `<small>${item.displayReading}</small>` : ''}</span><b>${item.answer}${item.answerReading ? `<small>${item.answerReading}</small>` : ''}</b></p>`).join('')}` : `<p class="perfect">${sessionMode === 'competition' ? 'Desafío perfecto: sumaste 100 puntos.' : 'Entrenamiento perfecto.'}</p>`}</div><button class="primary-btn" data-action="home">Volver a entrenar</button><button class="secondary-btn" data-action="race">Ver la carrera</button></div></section>`, sessionMode === 'competition' ? 'race' : 'train');
