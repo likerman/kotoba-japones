@@ -29,8 +29,8 @@
     "viewport": "desktop",
     "covers": ["variantes de ejercicios", "módulo Lectura de caracteres", "hiragana", "katakana", "pista de lectura"],
     "description": "Verifica que haya sesiones variadas y una práctica específica para reconocer caracteres.",
-    "steps": ["Abrir Lectura de caracteres", "Observar un hiragana o katakana sin la lectura revelada", "Pulsar Ver lectura", "Ocultar la lectura y responder", "Iniciar otra sesión y comparar la selección de preguntas"],
-    "expected": "La lectura puede mostrarse y ocultarse antes de responder; las sesiones toman muestras distintas de un banco amplio de caracteres y variantes."
+    "steps": ["Abrir Escritura y comprobar que aparece Ver lectura", "Revelar y ocultar la lectura de un carácter o palabra", "Abrir Lectura de caracteres", "Repetir la comprobación con hiragana y katakana", "Iniciar otra sesión y comparar la selección de preguntas"],
+    "expected": "Tanto Escritura como Lectura de caracteres permiten mostrar y ocultar la lectura antes de responder; las sesiones toman muestras distintas de un banco amplio."
   },
   {
     "name": "Exigir un perfil antes de entrenar",
